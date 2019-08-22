@@ -114,6 +114,7 @@ def _cc_library(
         srcs,
         includes = [],
         deps = [],
+        linkstatic = None,
         visibility = None):
     """Returns a string with a cc_library rule.
     cc_library defines a library with the given sources, optional dependencies,
@@ -125,6 +126,8 @@ def _cc_library(
         srcs: A list of source files that form the library.
         includes: names of include directories to be added to the compile line.
         deps: names of other libraries to be linked in.
+        linkstatic: if not None, the boolean value will be passed as the value
+                    for the linkstatic attribute of the rule
         visibility: the value of the 'visibility' attribute of the rule.
     Returns:
         A cc_library target
@@ -153,6 +156,8 @@ def _cc_library(
         ("    deps = [\n" +
          "\n".join(fmt_deps) +
         "\n    ],\n" if len(fmt_deps) > 0 else "") +
+        ("    linkstatic = " + ('1' if linkstatic else '0') +
+         ",\n" if linkstatic != None else "") +
         ('    visibility = ["' + visibility + '"],\n'
             if visibility else "") +
         ")\n"
@@ -269,17 +274,299 @@ def _llvm_get_library_rule(
         llvm_library_rule = "# file '%s' is not found.\n" % library_file
     return llvm_library_rule
 
+def _llvm_get_config_genrule(
+        repository_ctx,
+        name,
+        config_file_dir,
+        config_file_name):
+    """Returns a genrule to generate a header with LLVM's config
+
+    Genrule executes the given command and produces the given outputs.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        name: rule name.
+        config_file_dir: the directory where the header will appear.
+        config_file_name: the name of the generated header.
+    Returns:
+        A genrule target.
+    """
+    current_dir = repository_ctx.path(".")
+    llvm_include_dir = "%s/include" % current_dir
+    llvm_library_dir = "%s/lib" % current_dir
+    config_file_path = config_file_dir + '/' + config_file_name
+    command = ("echo '/* This generated file is for internal use. " +
+        "Do not include it from headers. */\n" +
+        "#ifdef LLVM_CONFIG_H\n" +
+        "#error " + config_file_name + " can only be included once\n" +
+        "#else\n" +
+        "#define LLVM_CONFIG_H\n" +
+        "#define LLVM_INCLUDE_DIR \"" + llvm_include_dir + "\"\n" +
+        "#define LLVM_LIBRARY_DIR \"" + llvm_library_dir + "\"\n" +
+        "#endif /* LLVM_CONFIG_H */\n' > $@")
+
+    return (
+        "genrule(\n" +
+        '    name = "' +
+        name + '",\n' +
+        "    outs = [\n" +
+        '        "' + config_file_path + '",' +
+        "\n    ],\n" +
+        '    cmd = """\n' +
+        command +
+        '\n    """,\n' +
+        ")\n"
+    )
+
+def _llvm_get_config_library_rule(
+        repository_ctx,
+        name,
+        config_rule_name,
+        config_file_dir):
+    """Returns a cc_library to include a generated LLVM config
+       header file.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        name: rule name.
+        config_rule_name: the name of the rule that generates the file.
+        config_file_dir: the directory where the header will appear.
+    Returns:
+        cc_library target that defines the library.
+    """
+    return _cc_library(
+        name = name,
+        srcs = [":" + config_rule_name],
+        includes = [config_file_dir],
+        linkstatic = True
+        )
+
+def _llvm_get_shared_lib_genrule(
+        repository_ctx,
+        name,
+        llvm_path,
+        shared_library,
+        ignore_prefix = False):
+    """Returns a genrule to copy a file with the given shared library.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        name: rule name.
+        llvm_path: a path to a local LLVM installation.
+        shared_library: an LLVM shared library file name without extension.
+        ignore_prefix: if True, no lib prefix must be added on any host OS.
+    Returns:
+        A genrule target.
+    """
+    if _is_windows(repository_ctx):
+        library_ext = "dll"
+        library_prefix = ""
+    else:
+        library_ext = "so"
+        library_prefix = "lib" if not ignore_prefix else ""
+# TODO add a check for MacOS X
+
+    library_file = "%s%s.%s" % (library_prefix, shared_library, library_ext)
+    shared_library_path = _norm_path("%s/bin/%s" % (llvm_path, library_file))
+    command = 'cp -f "%s" "%s"' % (shared_library_path, "$(@D)")
+    return (
+        "genrule(\n" +
+        '    name = "' +
+        name + '",\n' +
+        "    outs = [\n" +
+        '        "' + library_file + '",' +
+        "\n    ],\n" +
+        '    cmd = """\n' +
+        command +
+        '\n    """,\n' +
+        "output_to_bindir = 1\n" +
+        ")\n"
+    )
+
 def _llvm_installed_impl(repository_ctx):
     ctx = repository_ctx
     llvm_path = repository_ctx.os.environ[_LLVM_INSTALL_PREFIX]
     repository_ctx.symlink("%s/include" % llvm_path, "include")
     repository_ctx.symlink("%s/lib" % llvm_path, "lib")
     _tpl(repository_ctx, "BUILD", {
+        "%{CLANG_HEADERS_LIB}":
+             _llvm_get_include_rule(ctx, "clang_headers", ["clang", "clang-c"]),
         "%{LLVM_HEADERS_LIB}":
             _llvm_get_include_rule(ctx, "llvm_headers", ["llvm", "llvm-c"]),
 
+        "%{CLANG_ANALYSIS_LIB}":
+            _llvm_get_library_rule(ctx, "clang_analysis", "clangAnalysis",
+                ["clang_ast", "clang_ast_matchers", "clang_basic",
+                 "clang_lex", "llvm_support"]),
+        "%{CLANG_ARCMIGRATE_LIB}":
+            _llvm_get_library_rule(ctx, "clang_arc_migrate", "clangARCMigrate",
+                ["clang_ast", "clang_analysis", "clang_basic", "clang_edit",
+                 "clang_frontend", "clang_lex", "clang_rewrite", "clang_sema",
+                 "clang_serialization", "llvm_support"]),
+        "%{CLANG_AST_LIB}":
+            _llvm_get_library_rule(ctx, "clang_ast", "clangAST",
+                ["clang_basic", "clang_lex", "llvm_binary_format", "llvm_core",
+                 "llvm_support"]),
+        "%{CLANG_ASTMATCHERS_LIB}":
+            _llvm_get_library_rule(ctx, "clang_ast_matchers", "clangASTMatchers",
+                ["clang_ast", "clang_basic", "llvm_support"]),
+        "%{CLANG_BASIC_LIB}":
+            _llvm_get_library_rule(ctx, "clang_basic", "clangBasic",
+                ["llvm_core", "llvm_mc", "llvm_support"]),
+        "%{CLANG_CODEGEN_LIB}":
+            _llvm_get_library_rule(ctx, "clang_code_gen", "clangCodeGen",
+                ["clang_analysis", "clang_ast", "clang_ast_matchers",
+                 "clang_basic", "clang_frontend", "clang_lex",
+                 "clang_serialization", "llvm_analysis", "llvm_bit_reader",
+                 "llvm_bit_writer", "llvm_core", "llvm_coroutines",
+                 "llvm_coverage", "llvm_ipo", "llvm_ir_reader",
+                 "llvm_aggressive_inst_combine", "llvm_inst_combine",
+                 "llvm_instrumentation", "llvm_lto", "llvm_linker",
+                 "llvm_mc", "llvm_objc_arc_opts", "llvm_object",
+                 "llvm_passes", "llvm_profile_data", "llvm_remarks",
+                 "llvm_scalar_opts", "llvm_support", "llvm_target",
+                 "llvm_transform_utils"]),
+        "%{CLANG_CROSSTU_LIB}":
+            _llvm_get_library_rule(ctx, "clang_cross_tu", "clangCrossTU",
+                ["clang_ast", "clang_analysis", "clang_basic", "clang_edit",
+                 "clang_lex", "llvm_support"]),
+        "%{CLANG_DEPENDENCYSCANNING_LIB}":
+            _llvm_get_library_rule(ctx, "clang_dependency_scanning",
+                "clangDependencyScanning",
+                ["clang_ast", "clang_basic", "clang_driver", "clang_frontend",
+                 "clang_frontend_tool", "clang_lex", "clang_parse",
+                 "clang_serialization", "clang_tooling",
+                 "llvm_core", "llvm_support"]),
+        "%{CLANG_DIRECTORYWATCHER_LIB}":
+            _llvm_get_library_rule(ctx, "clang_directory_watcher",
+                "clangDirectoryWatcher",
+                ["llvm_support"]),
+        "%{CLANG_DRIVER_LIB}":
+            _llvm_get_library_rule(ctx, "clang_driver", "clangDriver",
+                ["clang_basic", "llvm_binary_format", "llvm_option",
+                 "llvm_support"]),
+        "%{CLANG_DYNAMICASTMATCHERS_LIB}":
+            _llvm_get_library_rule(ctx, "clang_dynamic_ast_matchers",
+                "clangDynamicASTMatchers",
+                ["clang_ast", "clang_ast_matchers", "clang_basic",
+                 "llvm_support"]),
+        "%{CLANG_EDIT_LIB}":
+            _llvm_get_library_rule(ctx, "clang_edit", "clangEdit",
+                ["clang_ast", "clang_basic", "clang_lex", "llvm_support"]),
+        "%{CLANG_FORMAT_LIB}":
+            _llvm_get_library_rule(ctx, "clang_format", "clangFormat",
+                ["clang_basic", "clang_lex", "clang_tooling_core",
+                 "clang_tooling_inclusions", "llvm_support"]),
+        "%{CLANG_FRONTEND_LIB}":
+            _llvm_get_library_rule(ctx, "clang_frontend", "clangFrontend",
+                ["clang_ast", "clang_basic", "clang_driver", "clang_edit",
+                 "clang_lex", "clang_parse", "clang_sema", "clang_serialization",
+                 "llvm_bit_reader", "llvm_bitstream_reader", "llvm_option",
+                 "llvm_profile_data", "llvm_support"]),
+        "%{CLANG_FRONTENDTOOL_LIB}":
+            _llvm_get_library_rule(ctx, "clang_frontend_tool", "clangFrontendTool",
+                ["clang_basic", "clang_code_gen", "clang_driver", "clang_frontend",
+                 "clang_rewrite_frontend", "clang_arc_migrate",
+                 "clang_static_analyzer_frontend", "llvm_option", "llvm_support"]),
+        "%{CLANG_HANDLECXX_LIB}":
+            _llvm_get_library_rule(ctx, "clang_handle_cxx", "clangHandleCXX",
+                ["clang_basic", "clang_code_gen", "clang_frontend", "clang_lex",
+                 "clang_serialization", "clang_tooling", "llvm_x86_code_gen",
+                 "llvm_x86_asm_parser", "llvm_x86_desc", "llvm_x86_disassembler",
+                 "llvm_x86_info", "llvm_x86_utils", "llvm_support"]),
+        "%{CLANG_HANDLELLVM_LIB}":
+            _llvm_get_library_rule(ctx, "clang_handle_llvm", "clangHandleLLVM",
+                ["llvm_analysis", "llvm_code_gen", "llvm_core",
+                 "llvm_execution_engine", "llvm_ipo", "llvm_ir_reader",
+                 "llvm_mc", "llvm_mc_jit", "llvm_object", "llvm_runtime_dy_ld",
+                 "llvm_selection_dag", "llvm_support", "llvm_target",
+                 "llvm_transform_utils", "llvm_x86_code_gen",
+                 "llvm_x86_asm_parser", "llvm_x86_desc",
+                 "llvm_x86_disassembler", "llvm_x86_info", "llvm_x86_utils"]),
+        "%{CLANG_INDEX_LIB}":
+            _llvm_get_library_rule(ctx, "clang_index", "clangIndex",
+                ["clang_ast", "clang_basic", "clang_format", "clang_frontend",
+                 "clang_lex", "clang_rewrite", "clang_serialization",
+                 "clang_tooling_core", "llvm_core", "llvm_support"]),
+        "%{CLANG_LEX_LIB}":
+            _llvm_get_library_rule(ctx, "clang_lex", "clangLex",
+                ["clang_basic", "llvm_support"]),
+        "%{CLANG_LIBCLANG_LIB}":
+            _llvm_get_library_rule(ctx, "clang_libclang", "libclang"),
+        "%{CLANG_LIBCLANG_COPY_GENRULE}":
+            _llvm_get_shared_lib_genrule(ctx, "clang_copy_libclang",
+                llvm_path, "libclang", ignore_prefix = True),
+        "%{CLANG_PARSE_LIB}":
+            _llvm_get_library_rule(ctx, "clang_parse", "clangParse",
+                ["clang_ast", "clang_basic", "clang_lex", "clang_sema",
+                 "llvm_mc", "llvm_mc_parser", "llvm_support"]),
+        "%{CLANG_REWRITE_LIB}":
+            _llvm_get_library_rule(ctx, "clang_rewrite", "clangRewrite",
+                ["clang_basic", "clang_lex", "llvm_support"]),
+        "%{CLANG_REWRITEFRONTEND_LIB}":
+            _llvm_get_library_rule(ctx, "clang_rewrite_frontend",
+                "clangRewriteFrontend",
+                ["clang_ast", "clang_basic", "clang_edit", "clang_frontend",
+                 "clang_lex", "clang_rewrite", "clang_serialization",
+                 "llvm_support"]),
+        "%{CLANG_SEMA_LIB}":
+            _llvm_get_library_rule(ctx, "clang_sema", "clangSema",
+                ["clang_ast", "clang_analysis", "clang_basic",
+                 "clang_edit", "clang_lex", "llvm_support"]),
+        "%{CLANG_SERIALIZATION_LIB}":
+            _llvm_get_library_rule(ctx, "clang_serialization", "clangSerialization",
+                ["clang_ast", "clang_basic", "clang_lex", "clang_sema",
+                 "llvm_bit_reader", "llvm_bitstream_reader", "llvm_support"]),
+        "%{CLANG_STATICANALYZERCHECKERS_LIB}":
+            _llvm_get_library_rule(ctx, "clang_static_analyzer_checkers",
+                "clangStaticAnalyzerChechers",
+                ["clang_ast", "clang_ast_matchers", "clang_analysis", "clang_basic",
+                 "clang_lex", "clang_static_analyzer_core", "llvm_support"]),
+        "%{CLANG_STATICANALYZERCORE_LIB}":
+            _llvm_get_library_rule(ctx, "clang_static_analyzer_core",
+                "clangStaticAnalyzerCore",
+                ["clang_ast", "clang_ast_matchers", "clang_analysis", "clang_basic",
+                 "clang_cross_tu", "clang_frontend", "clang_lex", "clang_rewrite",
+                 "llvm_support"]),
+        "%{CLANG_STATICANALYZERFRONTEND_LIB}":
+            _llvm_get_library_rule(ctx, "clang_static_analyzer_frontend",
+                "clangStaticAnalyzerFrontend",
+                ["clang_ast", "clang_analysis", "clang_basic", "clang_cross_tu",
+                 "clang_frontend", "clang_lex", "clang_static_analyzer_chechers",
+                 "clang_static_analyzer_core", "llvm_support"]),
+        "%{CLANG_TOOLING_LIB}":
+            _llvm_get_library_rule(ctx, "clang_tooling", "clangTooling",
+                ["clang_ast", "clang_ast_matchers", "clang_basic", "clang_driver",
+                 "clang_format", "clang_frontend", "clang_lex", "clang_rewrite",
+                 "clang_serialization", "clang_tooling_core",
+                 "llvm_option", "llvm_support"]),
+        "%{CLANG_TOOLINGASTDIFF_LIB}":
+            _llvm_get_library_rule(ctx, "clang_tooling_ast_diff",
+                "clangToolingASTDiff",
+                ["clang_ast", "clang_basic", "clang_lex", "llvm_support"]),
+        "%{CLANG_TOOLINGCORE_LIB}":
+            _llvm_get_library_rule(ctx, "clang_tooling_core", "clangToolingCore",
+                ["clang_ast", "clang_basic", "clang_lex", "clang_rewrite",
+                 "llvm_support"]),
+        "%{CLANG_TOOLINGINCLUSIONS_LIB}":
+            _llvm_get_library_rule(ctx, "clang_tooling_inclusions",
+                "clangToolingInclusions",
+                ["clang_basic", "clang_lex", "clang_rewrite",
+                 "clang_tooling_core", "llvm_support"]),
+        "%{CLANG_TOOLINGREFACTORING_LIB}":
+            _llvm_get_library_rule(ctx, "clang_tooling_refactoring",
+                "clangToolingRefactoring",
+                ["clang_ast", "clang_ast_matchers", "clang_basic", "clang_format",
+                 "clang_index", "clang_lex", "clang_rewrite",
+                 "clang_tooling_core", "llvm_support"]),
+        "%{CLANG_TOOLINGSYNTAX_LIB}":
+            _llvm_get_library_rule(ctx, "clang_tooling_syntax", "clangToolingSyntax",
+                ["clang_ast", "clang_basic", "clang_frontend", "clang_lex",
+                 "clang_tooling_core", "llvm_support"]),
+
         "%{LLVM_AGGRESSIVEINSTCOMBINE_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_aggressive_inst_combine", "LLVMAggressiveInstCombine",
+            _llvm_get_library_rule(ctx, "llvm_aggressive_inst_combine",
+                "LLVMAggressiveInstCombine",
                 ["llvm_analysis", "llvm_core", "llvm_support", "llvm_transform_utils"]),
         "%{LLVM_ANALYSIS_LIB}":
             _llvm_get_library_rule(ctx, "llvm_analysis", "LLVMAnalysis",
@@ -307,6 +594,8 @@ def _llvm_installed_impl(repository_ctx):
                 ["llvm_support"]),
         "%{LLVM_C_LIB}":
             _llvm_get_library_rule(ctx, "llvm_c", "LLVM-C"),
+        "%{LLVM_C_COPY_GENRULE}":
+            _llvm_get_shared_lib_genrule(ctx, "llvm_copy_c", llvm_path, "LLVM-C"),
         "%{LLVM_CODEGEN_LIB}":
             _llvm_get_library_rule(ctx, "llvm_code_gen", "LLVMCodeGen",
                 ["llvm_analysis", "llvm_bit_reader", "llvm_bit_writer", "llvm_core",
@@ -508,6 +797,12 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_XRAY_LIB}":
             _llvm_get_library_rule(ctx, "llvm_xray", "LLVMXRay",
                 ["llvm_object", "llvm_support"]),
+        "%{LLVM_CONFIG_GENRULE}":
+            _llvm_get_config_genrule(ctx, "llvm_config_files", "generated/include",
+                "llvm_config.h"),
+        "%{LLVM_CONFIG_LIB}":
+            _llvm_get_config_library_rule(ctx, "llvm_config_headers", "llvm_config_files",
+                "generated/include"),
     })
 
 llvm_configure = repository_rule(

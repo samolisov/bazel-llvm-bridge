@@ -14,10 +14,11 @@ debugger - LLDB, an implementation of the C++ Standard Library, and many other i
 things. The full list of LLVM's primary sub-projects is available on the official web-site.
 
 This project provides a bridge that let you use static libraries from a local installation
-of LLVM in your projects when Bazel is used for building. Each library from LLVM (including
-the special 'headers' library that provides LLVM's headers) is available as
-a `@local_llvm//:llvm_<library_name>` dependency (`@local_llvm//:llvm_headers` for the headers
-library), where `@local_llvm` is the name of the used `llvm_configure`
+of LLVM in your projects when Bazel is used for building. Each library from LLVM/Clang
+(including the special 'headers' library that provides LLVM's and Clang's headers)
+is available as a `@local_llvm//:llvm_<library_name>` dependency (`@local_llvm//:llvm_headers`
+for the headers library, `clang` as the prefix for Clang's libraries), where `@local_llvm`
+is the name of the used `llvm_configure`
 [repository rule](https://docs.bazel.build/versions/master/skylark/repository_rules.html)
 and can be edited in your `WORKSPACE`. Notice that a library will bring also its dependencies
 exactly how the CMake build works.
@@ -72,3 +73,11 @@ To build your targets, do the following:
     ```bash
     $ bazel build //:llvm_bb_counter
     ```
+
+Important note for users of the `libclang` and `LLVM-C` shared libraries. There
+is two rules to bring these libraries from the LLVM installation into the
+`bazel-bin`: `clang_copy_libclang` and `llvm_copy_c`. Just add the targets into
+the `data` attribute of a rule and they will appear in a
+`bazel-bin/external/<name of llvm_configure repository rule>` directory.
+Then the libraries can be manualy copied into the `bazel-bin` and be used for
+running built applications.

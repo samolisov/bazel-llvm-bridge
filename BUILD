@@ -38,3 +38,22 @@ cc_binary(
     ],
     visibility = ["//visibility:private"],
 )
+
+cc_binary(
+    name = 'clang_list_methods',
+    srcs = [
+        "src/clang_list_methods.cc",
+    ],
+    data = [
+        "@local_llvm//:clang_copy_libclang",
+        "@local_llvm//:llvm_copy_c",
+    ],
+    deps = [
+        "@local_llvm//:clang_headers",
+        "@local_llvm//:clang_libclang",
+        "@local_llvm//:llvm_config_headers",
+        "@local_llvm//:llvm_headers",
+        "@local_llvm//:llvm_support",
+    ],
+    visibility = ["//visibility:private"],
+)
