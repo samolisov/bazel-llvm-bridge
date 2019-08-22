@@ -79,5 +79,5 @@ is two rules to bring these libraries from the LLVM installation into the
 `bazel-bin`: `clang_copy_libclang` and `llvm_copy_c`. Just add the targets into
 the `data` attribute of a rule and they will appear in a
 `bazel-bin/external/<name of llvm_configure repository rule>` directory.
-Then the libraries can be manualy copied into the `bazel-bin` and be used for
-running built applications.
+Then the libraries can be copied into the `bazel-bin` (see genrules in the BUILD
+file) and be used for running your applications.
