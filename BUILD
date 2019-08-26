@@ -31,6 +31,18 @@ cc_binary(
     srcs = [
         "src/llvm_bb_counter.cc",
     ],
+    copts = select({
+        "@llvm_bazel_bridge//:linux_x86_64": [
+            "-std=c++14",
+            "-fno-rtti",
+        ],
+        "@llvm_bazel_bridge//:macos": [
+            "-std=c++14",
+            "-fno-rtti",
+        ],
+        "@llvm_bazel_bridge//:windows": [],
+        "//conditions:default": [],
+    }),
     deps = [
         "@local_llvm//:llvm_headers",
         "@local_llvm//:llvm_bit_reader",
@@ -43,6 +55,18 @@ cc_library(
     srcs = [
         "src/passes/function_argument_usage_pass.cc",
     ],
+    copts = select({
+        "@llvm_bazel_bridge//:linux_x86_64": [
+            "-std=c++14",
+            "-fno-rtti",
+        ],
+        "@llvm_bazel_bridge//:macos": [
+            "-std=c++14",
+            "-fno-rtti",
+        ],
+        "@llvm_bazel_bridge//:windows": [],
+        "//conditions:default": [],
+    }),
     deps = [
         "@local_llvm//:llvm_headers",
         "@local_llvm//:llvm_core",
@@ -68,6 +92,18 @@ cc_binary(
     srcs = [
         "src/clang_list_methods.cc",
     ],
+    copts = select({
+        "@llvm_bazel_bridge//:linux_x86_64": [
+            "-std=c++14",
+            "-fno-rtti",
+        ],
+        "@llvm_bazel_bridge//:macos": [
+            "-std=c++14",
+            "-fno-rtti",
+        ],
+        "@llvm_bazel_bridge//:windows": [],
+        "//conditions:default": [],
+    }),
     data = select({
         "@llvm_bazel_bridge//:linux_x86_64": [
             "copy_local_llvm_shared_lin",
@@ -87,6 +123,17 @@ cc_binary(
         "@local_llvm//:llvm_headers",
         "@local_llvm//:llvm_support",
     ],
+    linkopts = select({
+        "@llvm_bazel_bridge//:linux_x86_64": [
+            "-Wl,-R -Wl,."
+        ],
+        "@llvm_bazel_bridge//:macos": [
+            "-Wl,-R -Wl,."
+        ],
+        "@llvm_bazel_bridge//:windows": [
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:private"],
 )
 
@@ -94,33 +141,33 @@ genrule(
     name = "copy_local_llvm_shared_lin",
     srcs = [
         "@local_llvm//:clang_copy_libclang",
-        "@local_llvm//:llvm_copy_c",
+        "@local_llvm//:clang_copy_libclang_cpp",
     ],
     outs = [
-        "libclang.so",
-        "libLLVM-C.so",
+        "libclang.so.10svn",
+        "libclang-cpp.so.10svn",
     ],
     cmd = """
-        cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)
-        cp -f $(location @local_llvm//:llvm_copy_c) $(@D)
+        cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)/libclang.so.10svn
+        cp -f $(location @local_llvm//:clang_copy_libclang_cpp) $(@D)/libclang-cpp.so.10svn
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
 )
 
 genrule(
-    name = "copy_local_llvm_shared_max",
+    name = "copy_local_llvm_shared_mac",
     srcs = [
         "@local_llvm//:clang_copy_libclang",
-        "@local_llvm//:llvm_copy_c",
+        "@local_llvm//:clang_copy_libclang_cpp",
     ],
     outs = [
         "libclang.dylib",
-        "libLLVM-C.dylib",
+        "libclang-cpp.dylib",
     ],
     cmd = """
         cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)
-        cp -f $(location @local_llvm//:llvm_copy_c) $(@D)
+        cp -f $(location @local_llvm//:clang_copy_libclang_cpp) $(@D)
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],

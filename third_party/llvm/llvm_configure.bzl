@@ -100,41 +100,44 @@ def _norm_path(path):
         path = path[:-1]
     return path
 
-def _file_is_allowed(file_name, exts):
-    """Returns true if the extension of 'file_name' is in the 'exts' list
-       of allowed extensions. Allowed extensions must start from '.'.
-    """
-    for ext in exts:
-        if file_name.endswith(ext):
-            return True
-    return False
-
 def _cc_library(
         name,
         srcs,
+        hdrs = [],
         includes = [],
         deps = [],
+        copts = [],
+        linkopts = [],
         linkstatic = None,
         visibility = None):
     """Returns a string with a cc_library rule.
-    cc_library defines a library with the given sources, optional dependencies,
-    and visibility. If the library is a header library, an optional attribute
-    'includes' can be specified.
+    cc_library defines a library with the given sources, headers, optional
+    dependencies, and visibility. If the library is a header library,
+    an optional attribute 'includes' can be specified.
 
     Args:
         name: A unique name for cc_library.
         srcs: A list of source files that form the library.
-        includes: names of include directories to be added to the compile line.
-        deps: names of other libraries to be linked in.
-        linkstatic: if not None, the boolean value will be passed as the value
+        hdrs: A list of header files published by this library to be directly included
+              by sources in dependent rules.
+        includes: Names of include directories to be added to the compile line.
+        deps: Names of other libraries to be linked in.
+        copts: Options for the compiler to compile a target, which uses
+               this library.
+        linkopts: Options for the linker to link this library into a target.
+        linkstatic: If not None, the boolean value will be passed as the value
                     for the linkstatic attribute of the rule
-        visibility: the value of the 'visibility' attribute of the rule.
+        visibility: The value of the 'visibility' attribute of the rule.
     Returns:
         A cc_library target
     """
     fmt_srcs = []
     for src in srcs:
         fmt_srcs.append('        "' + src + '",')
+
+    fmt_hdrs = []
+    for hdr in hdrs:
+        fmt_hdrs.append('        "' + hdr + '",')
 
     fmt_includes = []
     for include in includes:
@@ -144,18 +147,35 @@ def _cc_library(
     for dep in deps:
         fmt_deps.append('        "' + dep + '",')
 
+    fmt_copts = []
+    for copt in copts:
+        fmt_copts.append('        "' + copt + '",')
+
+    fmt_linkopts = []
+    for linkopt in linkopts:
+        fmt_linkopts.append('        "' + linkopt + '",')
+
     return (
         "cc_library(\n" +
         '    name = "' + name + '",\n' +
-        "    srcs = [\n" +
-        "\n".join(fmt_srcs) +
-        "\n    ],\n" +
+        ("    srcs = [\n" +
+         "\n".join(fmt_srcs) +
+         "\n    ],\n" if len(fmt_srcs) > 0 else "") +
+        ("    hdrs = [\n" +
+         "\n".join(fmt_hdrs) +
+         "\n    ],\n" if len(fmt_hdrs) > 0 else "") +
         ("    includes = [\n" +
          "\n".join(fmt_includes) +
-        "\n    ],\n" if len(fmt_includes) > 0 else "") +
+         "\n    ],\n" if len(fmt_includes) > 0 else "") +
         ("    deps = [\n" +
          "\n".join(fmt_deps) +
-        "\n    ],\n" if len(fmt_deps) > 0 else "") +
+         "\n    ],\n" if len(fmt_deps) > 0 else "") +
+        ("    copts = [\n" +
+         "\n".join(fmt_copts) +
+         "\n    ],\n" if len(fmt_copts) > 0 else "") +
+        ("    linkopts = [\n" +
+         "\n".join(fmt_linkopts) +
+         "\n    ],\n" if len(fmt_linkopts) > 0 else "") +
         ("    linkstatic = " + ('1' if linkstatic else '0') +
          ",\n" if linkstatic != None else "") +
         ('    visibility = ["' + visibility + '"],\n'
@@ -167,9 +187,11 @@ def _get_library_for_dirs(
         repository_ctx,
         name,
         src_dirs,
-        allowed_exts = [],
+        hdr_dirs,
         includes = [],
-        deps = []):
+        deps = [],
+        copts = [],
+        linkopts = []):
     """Returns a cc_library that includes all files from the given list
        of directories.
 
@@ -178,21 +200,16 @@ def _get_library_for_dirs(
         name: rule name.
         src_dirs: names of directories files from which to be added to
                   the 'srcs' attribute of the generated target.
-        allowed_exts: expected extensions of files from the src_dirs. Only files
-                  with allowed extensions will be included into the 'srcs'
-                  attribute of the target.
+        hdr_dirs: names of directories files from which to be added to
+                  the 'hdrs' attribute of the generated target.
         includes: names of include directories to be added to the compile line.
         deps: names of other libraries to be linked in.
+        copts: options for the compiler to compile a target, which uses
+               this library.
+        linkopts: options for the linker to link this library into a target.
     Returns:
         cc_library target that defines the library.
     """
-    # define all the allowed Bazel cc_library srcs extensions
-    if not allowed_exts or len(allowed_exts) == 0:
-        allowed_exts = [".cc", ".cpp", ".cxx", ".c++", ".C", ".c", ".h", ".hh",
-                        ".hpp", ".ipp", ".hxx", ".h++", ".inc", ".inl", ".tlh",
-                        ".tli", ".H", ".S", ".s", ".asm", ".a", ".lib", ".pic.a",
-                        ".lo", ".lo.lib", ".pic.lo", ".so", ".dylib", ".dll", ".o",
-                        ".obj", ".pic.o"]
     srcs = []
     for src_dir in src_dirs:
         src_dir = _norm_path(src_dir)
@@ -200,13 +217,25 @@ def _get_library_for_dirs(
         # Create a list with the src_dir stripped to use for srcs.
         for current_file in files:
             src_file = current_file[current_file.find(src_dir):]
-            if src_file != "" and _file_is_allowed(src_file, allowed_exts):
+            if src_file != "":
                 srcs.append(src_file)
+    hdrs = []
+    for hdr_dir in hdr_dirs:
+        hdr_dir = _norm_path(hdr_dir)
+        files = sorted(_read_dir(repository_ctx, hdr_dir).splitlines())
+        # Create a list with the src_dir stripped to use for srcs.
+        for current_file in files:
+            hdr_file = current_file[current_file.find(hdr_dir):]
+            if hdr_file != "":
+                hdrs.append(hdr_file)
     return _cc_library(
         name,
         srcs,
+        hdrs,
         includes,
-        deps)
+        deps,
+        copts,
+        linkopts)
 
 def _llvm_get_include_rule(
         repository_ctx,
@@ -231,8 +260,8 @@ def _llvm_get_include_rule(
         llvm_include_rule = _get_library_for_dirs(
             repository_ctx,
             name,
+            [],  # LLVM's include is the public interface
             llvm_include_dirs,
-            [".h", ".inc"],
             ["include"]
         )
     else:
@@ -245,7 +274,8 @@ def _llvm_get_library_rule(
         repository_ctx,
         name,
         llvm_library_file,
-        deps = []):
+        deps = [],
+        linkopts = []):
     """Returns a cc_library to include an LLVM library with dependencies
 
     Args:
@@ -253,6 +283,7 @@ def _llvm_get_library_rule(
         name: rule name.
         llvm_library_file: an LLVM library file name without extension.
         deps: names of cc_library targets this one depends on.
+        linkopts: options for the linker to link this library into the target.
     Returns:
         cc_library target that defines the library.
     """
@@ -269,6 +300,49 @@ def _llvm_get_library_rule(
             name = name,
             srcs = [library_file],
             deps = deps,
+            linkopts = linkopts,
+            )
+    else:
+        llvm_library_rule = "# file '%s' is not found.\n" % library_file
+    return llvm_library_rule
+
+def _llvm_get_shared_library_rule(
+        repository_ctx,
+        name,
+        llvm_library_file,
+        ignore_prefix = False,
+        nix_only = False,
+        win_only = False):
+    """Returns a cc_library to include an LLVM shared library (or its interface
+       library on Windows) with dependencies.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        name: rule name.
+        llvm_library_file: an LLVM library file name without extension.
+        ignore_prefix: if True, no lib prefix must be added on any host OS.
+        nix_only: the library is available only on *nix systems.
+        win_only: the library is available only on Windows.):
+
+    Returns:
+        cc_library target that defines the library.
+    """
+    if _is_windows(repository_ctx):
+        if nix_only:
+            return "# library '%s' is available on *Nix only\n" % llvm_library_file
+        library_ext = "lib"
+        library_prefix = ""
+    else:
+        if win_only:
+            return "# library '%s' is available on Windows only\n" % llvm_library_file
+        library_ext = "so"
+        library_prefix = "lib" if not ignore_prefix else ""
+# TODO add a check for MacOS X
+    library_file = "lib/%s%s.%s" % (library_prefix, llvm_library_file, library_ext)
+    if repository_ctx.path(library_file).exists:
+        llvm_library_rule = _cc_library(
+            name = name,
+            srcs = [library_file],
             )
     else:
         llvm_library_rule = "# file '%s' is not found.\n" % library_file
@@ -346,7 +420,9 @@ def _llvm_get_shared_lib_genrule(
         name,
         llvm_path,
         shared_library,
-        ignore_prefix = False):
+        ignore_prefix = False,
+        nix_only = False,
+        win_only = False):
     """Returns a genrule to copy a file with the given shared library.
 
     Args:
@@ -355,19 +431,28 @@ def _llvm_get_shared_lib_genrule(
         llvm_path: a path to a local LLVM installation.
         shared_library: an LLVM shared library file name without extension.
         ignore_prefix: if True, no lib prefix must be added on any host OS.
+        nix_only: the library is available only on *nix systems.
+        win_only: the library is available only on Windows.
     Returns:
         A genrule target.
     """
     if _is_windows(repository_ctx):
+        if nix_only:
+            return "# library '%s' is available on *Nix only\n" % shared_library
         library_ext = "dll"
         library_prefix = ""
+        shlib_folder = "bin"
     else:
+        if win_only:
+            return "# library '%s' is available on Windows only\n" % shared_library
         library_ext = "so"
         library_prefix = "lib" if not ignore_prefix else ""
+        shlib_folder = "lib"
 # TODO add a check for MacOS X
 
     library_file = "%s%s.%s" % (library_prefix, shared_library, library_ext)
-    shared_library_path = _norm_path("%s/bin/%s" % (llvm_path, library_file))
+    shared_library_path = _norm_path("%s/%s/%s" % (llvm_path, shlib_folder,
+        library_file))
     command = 'cp -f "%s" "%s"' % (shared_library_path, "$(@D)")
     return (
         "genrule(\n" +
@@ -379,7 +464,7 @@ def _llvm_get_shared_lib_genrule(
         '    cmd = """\n' +
         command +
         '\n    """,\n' +
-        "output_to_bindir = 1\n" +
+        "    output_to_bindir = 1\n" +
         ")\n"
     )
 
@@ -492,10 +577,17 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, "clang_lex", "clangLex",
                 ["clang_basic", "llvm_support"]),
         "%{CLANG_LIBCLANG_LIB}":
-            _llvm_get_library_rule(ctx, "clang_libclang", "libclang"),
+            _llvm_get_shared_library_rule(ctx, "clang_libclang", "libclang",
+                ignore_prefix = True),
         "%{CLANG_LIBCLANG_COPY_GENRULE}":
             _llvm_get_shared_lib_genrule(ctx, "clang_copy_libclang",
                 llvm_path, "libclang", ignore_prefix = True),
+        "%{CLANG_LIBCLANGCPP_LIB}":
+            _llvm_get_shared_library_rule(ctx, "clang_libclang_cpp", "libclang-cpp",
+                ignore_prefix = True, nix_only = True),
+        "%{CLANG_LIBCLANGCPP_COPY_GENRULE}":
+            _llvm_get_shared_lib_genrule(ctx, "clang_copy_libclang_cpp",
+                llvm_path, "libclang-cpp", ignore_prefix = True, nix_only=True),
         "%{CLANG_PARSE_LIB}":
             _llvm_get_library_rule(ctx, "clang_parse", "clangParse",
                 ["clang_ast", "clang_basic", "clang_lex", "clang_sema",
@@ -519,7 +611,7 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_bit_reader", "llvm_bitstream_reader", "llvm_support"]),
         "%{CLANG_STATICANALYZERCHECKERS_LIB}":
             _llvm_get_library_rule(ctx, "clang_static_analyzer_checkers",
-                "clangStaticAnalyzerChechers",
+                "clangStaticAnalyzerCheckers",
                 ["clang_ast", "clang_ast_matchers", "clang_analysis", "clang_basic",
                  "clang_lex", "clang_static_analyzer_core", "llvm_support"]),
         "%{CLANG_STATICANALYZERCORE_LIB}":
@@ -593,9 +685,10 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, "llvm_bitstream_reader", "LLVMBitstreamReader",
                 ["llvm_support"]),
         "%{LLVM_C_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_c", "LLVM-C"),
+            _llvm_get_shared_library_rule(ctx, "llvm_c", "LLVM-C", win_only = True),
         "%{LLVM_C_COPY_GENRULE}":
-            _llvm_get_shared_lib_genrule(ctx, "llvm_copy_c", llvm_path, "LLVM-C"),
+            _llvm_get_shared_lib_genrule(ctx, "llvm_copy_c", llvm_path,
+                "LLVM-C", win_only = True),
         "%{LLVM_CODEGEN_LIB}":
             _llvm_get_library_rule(ctx, "llvm_code_gen", "LLVMCodeGen",
                 ["llvm_analysis", "llvm_bit_reader", "llvm_bit_writer", "llvm_core",
@@ -748,7 +841,7 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_target", "llvm_transform_utils"]),
         "%{LLVM_SUPPORT_LIB}":
             _llvm_get_library_rule(ctx, "llvm_support", "LLVMSupport",
-                ["llvm_demangle"]),
+                ["llvm_demangle"], ["-lpthread"] if not _is_windows(ctx) else []),
         "%{LLVM_SYMBOLIZE_LIB}":
             _llvm_get_library_rule(ctx, "llvm_symbolize", "LLVMSymbolize",
                 ["llvm_debug_info_dwarf", "llvm_debug_info_pdb", "llvm_demangle",

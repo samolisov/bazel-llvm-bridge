@@ -74,10 +74,10 @@ To build your targets, do the following:
     $ bazel build //:llvm_bb_counter
     ```
 
-Important note for users of the `libclang` and `LLVM-C` shared libraries. There
-is two rules to bring these libraries from the LLVM installation into the
-`bazel-bin`: `clang_copy_libclang` and `llvm_copy_c`. Just add the targets into
-the `data` attribute of a rule and they will appear in a
-`bazel-bin/external/<name of llvm_configure repository rule>` directory.
-Then the libraries can be copied into the `bazel-bin` (see genrules in the BUILD
-file) and be used for running your applications.
+Important note for users of the `libclang`, `libclang-cpp` and `LLVM-C` shared
+libraries. There are three rules to bring these libraries from the LLVM
+installation into the `bazel-bin`: `clang_copy_libclang`, `clang_copy_libclang_cpp`
+and `llvm_copy_c`. Just add the targets into the `data` attribute of a rule and
+they will appear in a `bazel-bin/external/<name of llvm_configure repository rule>`
+directory. Then the libraries can be copied into the `bazel-bin` (see genrules
+in the BUILD file) and be used for running your applications.
