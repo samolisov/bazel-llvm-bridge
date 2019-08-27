@@ -748,10 +748,6 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_INTERPRETER_LIB}":
             _llvm_get_library_rule(ctx, "llvm_interpreter", "LLVMInterpreter",
                 ["llvm_code_gen", "llvm_core", "llvm_execution_engine", "llvm_support"]),
-        "%{LLVM_IRPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_ir_parser", "LLVMMIRParser",
-                ["llvm_asm_parser", "llvm_binary_format", "llvm_code_gen", "llvm_core",
-                 "llvm_mc", "llvm_support", "llvm_target"]),
         "%{LLVM_IRREADER_LIB}":
             _llvm_get_library_rule(ctx, "llvm_ir_reader", "LLVMIRReader",
                 ["llvm_asm_parser", "llvm_bit_reader", "llvm_core", "llvm_support"]),
@@ -798,6 +794,10 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_MCDISASSEMBLER_LIB}":
             _llvm_get_library_rule(ctx, "llvm_mc_disassembler", "LLVMMCDisassembler",
                 ["llvm_mc", "llvm_support"]),
+        "%{LLVM_MIRPARSER_LIB}":
+            _llvm_get_library_rule(ctx, "llvm_mir_parser", "LLVMMIRParser",
+                ["llvm_asm_parser", "llvm_binary_format", "llvm_code_gen", "llvm_core",
+                 "llvm_mc", "llvm_support", "llvm_target"]),
         "%{LLVM_OBJCARCOPTS_LIB}":
             _llvm_get_library_rule(ctx, "llvm_objc_arc_opts", "LLVMObjCARCOpts",
                 ["llvm_analysis", "llvm_core", "llvm_support", "llvm_transform_utils"]),
