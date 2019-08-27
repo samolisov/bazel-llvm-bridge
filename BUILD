@@ -33,11 +33,9 @@ cc_binary(
     ],
     copts = select({
         "@llvm_bazel_bridge//:linux_x86_64": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:macos": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:windows": [],
@@ -57,11 +55,9 @@ cc_library(
     ],
     copts = select({
         "@llvm_bazel_bridge//:linux_x86_64": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:macos": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:windows": [],
@@ -94,11 +90,9 @@ cc_binary(
     ],
     copts = select({
         "@llvm_bazel_bridge//:linux_x86_64": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:macos": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:windows": [],
@@ -144,12 +138,12 @@ genrule(
         "@local_llvm//:clang_copy_libclang_cpp",
     ],
     outs = [
-        "libclang.so.10svn",
-        "libclang-cpp.so.10svn",
+        "libclang.so.9",
+        "libclang-cpp.so.9",
     ],
     cmd = """
-        cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)/libclang.so.10svn
-        cp -f $(location @local_llvm//:clang_copy_libclang_cpp) $(@D)/libclang-cpp.so.10svn
+        cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)/libclang.so.9
+        cp -f $(location @local_llvm//:clang_copy_libclang_cpp) $(@D)/libclang-cpp.so.9
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],

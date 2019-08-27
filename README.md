@@ -25,6 +25,15 @@ exactly how the CMake build works.
 
 In order to use any LLVM libraries in you targets, do the following steps:
 
+ 0. Checkout the corresponding version of the bridge. A version number
+    is matched to the version of LLVM and can be found in the `release/<version>.x`
+    branch. For example:
+
+    ```bash
+    $ git clone https://github.com/samolisov/bazel-llvm-bridge.git
+    $ git checkout release/9.x
+    ```
+
  1. Borrow the `third_party/llvm` directory to the same folder of
     your project.
 
@@ -65,7 +74,13 @@ To build your targets, do the following:
     contain a path to a local LLVM installation:
 
     ```bash
-    $ set LLVM_INSTALL_PREFIX=C:\Dev\llvm-master
+    $ export LLVM_INSTALL_PREFIX=~/dev/llvm_master
+    ```
+
+    or, on Windows:
+
+    ```bash
+    $ set LLVM_INSTALL_PREFIX=C:\Dev\llvm_master
     ```
 
  2. Run the build:
