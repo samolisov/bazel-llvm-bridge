@@ -33,11 +33,9 @@ cc_binary(
     ],
     copts = select({
         "@llvm_bazel_bridge//:linux_x86_64": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:macos": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:windows": [],
@@ -57,11 +55,9 @@ cc_library(
     ],
     copts = select({
         "@llvm_bazel_bridge//:linux_x86_64": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:macos": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:windows": [],
@@ -94,11 +90,9 @@ cc_binary(
     ],
     copts = select({
         "@llvm_bazel_bridge//:linux_x86_64": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:macos": [
-            "-std=c++14",
             "-fno-rtti",
         ],
         "@llvm_bazel_bridge//:windows": [],
@@ -141,15 +135,12 @@ genrule(
     name = "copy_local_llvm_shared_lin",
     srcs = [
         "@local_llvm//:clang_copy_libclang",
-        "@local_llvm//:clang_copy_libclang_cpp",
     ],
     outs = [
-        "libclang.so.10svn",
-        "libclang-cpp.so.10svn",
+        "libclang.so.8",
     ],
     cmd = """
-        cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)/libclang.so.10svn
-        cp -f $(location @local_llvm//:clang_copy_libclang_cpp) $(@D)/libclang-cpp.so.10svn
+        cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)/libclang.so.8
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
@@ -159,15 +150,12 @@ genrule(
     name = "copy_local_llvm_shared_mac",
     srcs = [
         "@local_llvm//:clang_copy_libclang",
-        "@local_llvm//:clang_copy_libclang_cpp",
     ],
     outs = [
         "libclang.dylib",
-        "libclang-cpp.dylib",
     ],
     cmd = """
         cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)
-        cp -f $(location @local_llvm//:clang_copy_libclang_cpp) $(@D)
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
@@ -177,15 +165,12 @@ genrule(
     name = "copy_local_llvm_shared_win",
     srcs = [
         "@local_llvm//:clang_copy_libclang",
-        "@local_llvm//:llvm_copy_c",
     ],
     outs = [
         "libclang.dll",
-        "LLVM-C.dll",
     ],
     cmd = """
         cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)
-        cp -f $(location @local_llvm//:llvm_copy_c) $(@D)
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
