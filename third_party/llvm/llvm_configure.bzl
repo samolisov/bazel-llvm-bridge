@@ -827,7 +827,7 @@ def _llvm_installed_impl(repository_ctx):
                 ["llvm_core", "llvm_support"]),
         "%{LLVM_REMARKS_LIB}":
             _llvm_get_library_rule(ctx, "llvm_remarks", "LLVMRemarks",
-                ["llvm_support"]),
+                ["llvm_bitstream_reader", "llvm_support"]),
         "%{LLVM_RUNTIMEDYLD_LIB}":
             _llvm_get_library_rule(ctx, "llvm_runtime_dy_ld", "LLVMRuntimeDyld",
                 ["llvm_mc", "llvm_object", "llvm_support"]),
