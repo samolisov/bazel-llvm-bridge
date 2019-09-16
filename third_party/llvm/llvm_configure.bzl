@@ -624,7 +624,7 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, "clang_static_analyzer_frontend",
                 "clangStaticAnalyzerFrontend",
                 ["clang_ast", "clang_analysis", "clang_basic", "clang_cross_tu",
-                 "clang_frontend", "clang_lex", "clang_static_analyzer_chechers",
+                 "clang_frontend", "clang_lex", "clang_static_analyzer_checkers",
                  "clang_static_analyzer_core", "llvm_support"]),
         "%{CLANG_TOOLING_LIB}":
             _llvm_get_library_rule(ctx, "clang_tooling", "clangTooling",
