@@ -529,7 +529,8 @@ def _llvm_installed_impl(repository_ctx):
         "%{CLANG_DRIVER_LIB}":
             _llvm_get_library_rule(ctx, "clang_driver", "clangDriver",
                 ["clang_basic", "llvm_binary_format", "llvm_option",
-                 "llvm_support"]),
+                 "llvm_support"],
+                ["-DEFAULTLIB:version.lib"] if _is_windows(ctx) else []),
         "%{CLANG_DYNAMICASTMATCHERS_LIB}":
             _llvm_get_library_rule(ctx, "clang_dynamic_ast_matchers",
                 "clangDynamicASTMatchers",
