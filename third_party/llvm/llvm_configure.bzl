@@ -8,6 +8,7 @@
 """
 
 _LLVM_INSTALL_PREFIX = "LLVM_INSTALL_PREFIX"
+_Z3_INSTALL_PREFIX = "Z3_INSTALL_PREFIX"
 
 def _tpl(repository_ctx, tpl, substitutions = {}, out = None):
     """Generate a build file for bazel based upon the `tpl` template."""
@@ -24,6 +25,12 @@ def _fail(msg):
     red = "\033[0;31m"
     no_color = "\033[0m"
     fail("%sPython Configuration Error:%s %s\n" % (red, no_color, msg))
+
+def _warn(warning, msg = ""):
+    """Output warning message."""
+    red = "\033[0;31m"
+    no_color = "\033[0m"
+    print("%s%s%s %s\n" % (red, warning, no_color, msg))
 
 def _is_windows(repository_ctx):
     """Returns true if the host operating system is Windows."""
@@ -99,6 +106,58 @@ def _norm_path(path):
     if path[-1] == "/":
         path = path[:-1]
     return path
+
+def _static_library_file_params(repository_ctx):
+    """Returns a tuple with platform-dependent parameters of
+       a static library.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+
+    Returns:
+        A tuple in the following format:
+        - prefix
+        - extension
+    """
+
+    # TODO add a check for MacOS X
+    return ("", "lib") if _is_windows(repository_ctx) else ("lib", "a")
+
+def _import_library_file_params(repository_ctx):
+    """Returns a tuple with platform-dependent parameters of
+       an import library. While on *Nix, an *.so file is an import
+       library itself, on Windows a separated .lib file must
+       be present.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+
+    Returns:
+        A tuple in the following format:
+        - prefix
+        - extension
+    """
+
+    # TODO add a check for MacOS X
+    return ("", "lib") if _is_windows(repository_ctx) else ("lib", "so")
+
+def _shared_library_file_params(repository_ctx):
+    """Returns a tuple with platform-dependent parameters of
+       a shared library.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+
+    Returns:
+        A tuple in the following format:
+        - prefix
+        - extension
+        - directory where to search for the library file.
+    """
+
+    # TODO add a check for MacOS X
+    return ("", "dll", "bin") if _is_windows(
+        repository_ctx) else ("lib", "so", "lib")
 
 def _cc_library(
         name,
@@ -275,7 +334,9 @@ def _llvm_get_library_rule(
         name,
         llvm_library_file,
         deps = [],
-        linkopts = []):
+        linkopts = [],
+        ignore_prefix = False,
+        directory = "lib"):
     """Returns a cc_library to include an LLVM library with dependencies
 
     Args:
@@ -284,17 +345,14 @@ def _llvm_get_library_rule(
         llvm_library_file: an LLVM library file name without extension.
         deps: names of cc_library targets this one depends on.
         linkopts: options for the linker to link this library into the target.
+        ignore_prefix: if True, no lib prefix must be added on any host OS.
+        directory: where to search the llvm_library_file, 'lib' by default.
     Returns:
         cc_library target that defines the library.
     """
-    if _is_windows(repository_ctx):
-        library_ext = "lib"
-        library_prefix = ""
-    else:
-        library_ext = "a"
-        library_prefix = "lib"
-# TODO add a check for MacOS X
-    library_file = "lib/%s%s.%s" % (library_prefix, llvm_library_file, library_ext)
+    library_prefix, library_ext = _static_library_file_params(repository_ctx)
+    library_prefix = library_prefix if not ignore_prefix else ""
+    library_file = "%s/%s%s.%s" % (directory, library_prefix, llvm_library_file, library_ext)
     if repository_ctx.path(library_file).exists:
         llvm_library_rule = _cc_library(
             name = name,
@@ -327,17 +385,13 @@ def _llvm_get_shared_library_rule(
     Returns:
         cc_library target that defines the library.
     """
-    if _is_windows(repository_ctx):
-        if nix_only:
-            return "# library '%s' is available on *Nix only\n" % llvm_library_file
-        library_ext = "lib"
-        library_prefix = ""
-    else:
-        if win_only:
-            return "# library '%s' is available on Windows only\n" % llvm_library_file
-        library_ext = "so"
-        library_prefix = "lib" if not ignore_prefix else ""
-# TODO add a check for MacOS X
+    if _is_windows(repository_ctx) and nix_only:
+        return "# library '%s' is available on *Nix only\n" % llvm_library_file
+    if not _is_windows(repository_ctx) and win_only:
+        return "# library '%s' is available on Windows only\n" % llvm_library_file
+
+    library_prefix, library_ext = _import_library_file_params(repository_ctx)
+    library_prefix = library_prefix if not ignore_prefix else ""
     library_file = "lib/%s%s.%s" % (library_prefix, llvm_library_file, library_ext)
     if repository_ctx.path(library_file).exists:
         llvm_library_rule = _cc_library(
@@ -436,20 +490,14 @@ def _llvm_get_shared_lib_genrule(
     Returns:
         A genrule target.
     """
-    if _is_windows(repository_ctx):
-        if nix_only:
-            return "# library '%s' is available on *Nix only\n" % shared_library
-        library_ext = "dll"
-        library_prefix = ""
-        shlib_folder = "bin"
-    else:
-        if win_only:
-            return "# library '%s' is available on Windows only\n" % shared_library
-        library_ext = "so"
-        library_prefix = "lib" if not ignore_prefix else ""
-        shlib_folder = "lib"
-# TODO add a check for MacOS X
+    if _is_windows(repository_ctx) and nix_only:
+        return "# library '%s' is available on *Nix only\n" % shared_library
+    if not _is_windows(repository_ctx) and win_only:
+        return "# library '%s' is available on Windows only\n" % shared_library
 
+    library_prefix, library_ext, shlib_folder = _shared_library_file_params(
+        repository_ctx)
+    library_prefix = library_prefix if not ignore_prefix else ""
     library_file = "%s%s.%s" % (library_prefix, shared_library, library_ext)
     shared_library_path = _norm_path("%s/%s/%s" % (llvm_path, shlib_folder,
         library_file))
@@ -468,11 +516,87 @@ def _llvm_get_shared_lib_genrule(
         ")\n"
     )
 
+def _enable_local_z3(repository_ctx):
+    """Returns whether the Z3 Solver is enabled. The solver is
+       enabled if the _Z3_INSTALL_PREFIX environment variable
+       is defined.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+    Returns:
+        True if the Z3 Solver is enabled.
+    """
+
+    return _Z3_INSTALL_PREFIX in repository_ctx.os.environ
+
+def _z3_symlink_library(
+        repository_ctx,
+        z3_path,
+        subfolder,
+        library_file,
+        target):
+    """Symlink the Z3 Solver's static library into the bazel building directory.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        z3_path: full path to the Z3 Solver's installation.
+        subfolder: where to search for the 'library_file'.
+        library_file: the name of the Z3 library file.
+        target: the symlink target.
+    Returns:
+        True if the Z3 librart is found in the subfolder or False otherwise.
+    """
+
+    library_file_path = "%s/%s/%s" % (z3_path, subfolder, library_file)
+    if repository_ctx.path(library_file_path).exists:
+        repository_ctx.symlink(library_file_path, target)
+        return True
+    else:
+        return False
+
+def _z3_get_libraries(repository_ctx, z3_path):
+    """Symlink the Z3 Solver's libraries into the bazel building directory.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        z3_path: full path to the Z3 Solver's installation.
+    """
+
+    _, library_ext = _static_library_file_params(repository_ctx)
+    static_library = "libz3.%s" % library_ext
+    target = "z3/lib/%s" % static_library # Notice! even if libz3 is a shared library,
+                                          # the symlink will have extension .a
+    if not _is_windows(repository_ctx):
+        _, library_ext = _import_library_file_params(repository_ctx)
+        import_library = "libz3.%s" % library_ext
+        variants = [("lib64", static_library),
+                    ("lib64", import_library),
+                    ("lib", static_library),
+                    ("lib", import_library),
+                    ("bin", static_library),
+                    ("bin", import_library),
+                   ]
+    else:
+        variants = [("lib", static_library),
+                    ("bin", static_library),
+                   ]
+    for folder, library_file in variants:
+        if _z3_symlink_library(repository_ctx, z3_path, folder, library_file, target):
+            return
+
 def _llvm_installed_impl(repository_ctx):
     ctx = repository_ctx
     llvm_path = repository_ctx.os.environ[_LLVM_INSTALL_PREFIX]
     repository_ctx.symlink("%s/include" % llvm_path, "include")
     repository_ctx.symlink("%s/lib" % llvm_path, "lib")
+    if _enable_local_z3(repository_ctx):
+        z3_path = repository_ctx.os.environ[_Z3_INSTALL_PREFIX]
+        _z3_get_libraries(repository_ctx, z3_path)
+    else:
+        _warn("Z3 Solver is not enabled.",
+            " ".join(["To enable the solver, set the environment variable",
+             "'%s' to the full path of the solver's local installation." % _Z3_INSTALL_PREFIX,
+            ]))
     _tpl(repository_ctx, "BUILD", {
         "%{CLANG_HEADERS_LIB}":
              _llvm_get_include_rule(ctx, "clang_headers", ["clang", "clang-c"]),
@@ -806,7 +930,8 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_target", "llvm_transform_utils"]),
         "%{LLVM_SUPPORT_LIB}":
             _llvm_get_library_rule(ctx, "llvm_support", "LLVMSupport",
-                ["llvm_demangle"], ["-lpthread"] if not _is_windows(ctx) else []),
+                ["llvm_demangle"] + (["z3_solver"] if _enable_local_z3(ctx) else []),
+                ["-lpthread"] if not _is_windows(ctx) else []),
         "%{LLVM_SYMBOLIZE_LIB}":
             _llvm_get_library_rule(ctx, "llvm_symbolize", "LLVMSymbolize",
                 ["llvm_debug_info_dwarf", "llvm_debug_info_pdb", "llvm_demangle",
@@ -864,11 +989,15 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_CONFIG_LIB}":
             _llvm_get_config_library_rule(ctx, "llvm_config_headers", "llvm_config_files",
                 "generated/include"),
+        "%{Z3_SOLVER_LIB}":
+            _llvm_get_library_rule(ctx, "z3_solver", "libz3", ignore_prefix = True,
+                directory = "z3/lib"),
     })
 
 llvm_configure = repository_rule(
     implementation = _llvm_installed_impl,
     environ = [
         _LLVM_INSTALL_PREFIX,
+        _Z3_INSTALL_PREFIX,
     ],
 )

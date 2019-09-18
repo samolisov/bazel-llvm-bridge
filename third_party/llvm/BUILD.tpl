@@ -100,3 +100,5 @@ package(default_visibility = ["//visibility:public"])
 
 %{LLVM_CONFIG_GENRULE}
 %{LLVM_CONFIG_LIB}
+
+%{Z3_SOLVER_LIB}
