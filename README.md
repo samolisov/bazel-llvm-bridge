@@ -23,6 +23,14 @@ is the name of the used `llvm_configure`
 and can be edited in your `WORKSPACE`. Notice that a library will bring also its dependencies
 exactly how the CMake build works.
 
+When LLVM/Clang is built on an environment that supports the
+[*Z3 Solver*](https://github.com/Z3Prover/z3), the code of some LLVM and Clang libraries
+is enriched by Z3 and projects dependent on the libraries must be linked against it.
+To enable the linking, an environment variable is added: `Z3_INSTALL_PREFIX`.
+If the environment variable is set, the Z3 library will be copied into the building
+directory and a target for the Z3 Solver will be added into the `deps` attribute of the
+`llvm_support` library.
+
 In order to use any LLVM libraries in you targets, do the following steps:
 
  0. Checkout the corresponding version of the bridge. A version number
@@ -70,7 +78,7 @@ To build your targets, do the following:
     archive with an LLVM package for your platform. The package must be unarchived
     into a local directory.
 
- 1. Set up the `LLVM_INSTALL_PREFIX` environment-variable. The variable must
+ 1. Set up the `LLVM_INSTALL_PREFIX` environment variable. The variable must
     contain a path to a local LLVM installation:
 
     ```bash
@@ -83,10 +91,31 @@ To build your targets, do the following:
     $ set LLVM_INSTALL_PREFIX=C:\Dev\llvm_master
     ```
 
- 2. Run the build:
+ 2. (Optional) Set up the `Z3_INSTALL_PREFIX` environment variable. The variable must
+    contain a path to a local Z3 Solver installation:
+
+    ```bash
+    $ export Z3_INSTALL_PREFIX=~/usr
+    ```
+
+    or, on Windows:
+
+    ```bash
+    $ set Z3_INSTALL_PREFIX="C:\Program Files\z3"
+    ```
+
+  3. Run the build:
 
     ```bash
     $ bazel build //:llvm_bb_counter
+    ```
+
+    alternatively, the environment variables may be passed directly to the build
+    command:
+
+    ```bash
+    $ bazel build --action_env LLVM_INSTALL_PREFIX=C:\Dev\llvm_master
+      --action_env Z3_INSTALL_PREFIX="C:\Program Files\z3" //:clang_list_methods
     ```
 
 Important note for users of the `libclang`, `libclang-cpp` and `LLVM-C` shared
