@@ -636,8 +636,8 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_support", "llvm_target", "llvm_transform_utils"]),
         "%{CLANG_CROSSTU_LIB}":
             _llvm_get_library_rule(ctx, "clang_cross_tu", "clangCrossTU",
-                ["clang_ast", "clang_analysis", "clang_basic", "clang_edit",
-                 "clang_lex", "llvm_support"]),
+                ["clang_ast", "clang_basic", "clang_frontend", "clang_index",
+                 "llvm_support"]),
         "%{CLANG_DRIVER_LIB}":
             _llvm_get_library_rule(ctx, "clang_driver", "clangDriver",
                 ["clang_basic", "llvm_binary_format", "llvm_option",
