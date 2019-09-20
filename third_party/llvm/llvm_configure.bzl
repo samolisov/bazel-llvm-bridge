@@ -516,6 +516,56 @@ def _llvm_get_shared_lib_genrule(
         ")\n"
     )
 
+def _llvm_get_link_opts(repository_ctx):
+    """Returns a list of platform-provided dependencies.
+       The list should be used as a value of the 'linkopts'
+       rule parameter.
+
+       Implementation notes: the method uses the
+       "lib/cmake/llvm/LLVMExports.cmake" file and grabs the
+       dependencies of the LLVMSupport library excluded all
+       started with LLVM or contains dot (so, being a real file).
+
+    Args:
+        repository_ctx: the repository_ctx object.
+    Returns:
+        A list of platform-provided dependencies.
+    """
+
+    # No link opts on Windows
+    if _is_windows(repository_ctx):
+        return []
+
+    # The algorithm is following: read the export file, read libraries
+    # for llvm_support, remove started with LLVM, and convert them into
+    # an array of "-l<library>" positions.
+    exportpath = repository_ctx.path("lib/cmake/llvm/LLVMExports.cmake")
+    if not exportpath.exists:
+        return []
+    config = repository_ctx.read("lib/cmake/llvm/LLVMExports.cmake")
+    libraries_line = ""
+    lines = config.splitlines()
+    for idx, line in enumerate(lines):
+        # looking for dependencies for LLVMSupport
+        if line.startswith("set_target_properties(LLVMSupport"):
+            if idx + 1 < len(lines):
+                libraries_line = lines[idx + 1]
+            break
+    if len(libraries_line) == 0:
+        return []
+    start = libraries_line.find('"')
+    end = libraries_line.find('"', start + 1)
+    libraries_line = libraries_line[start + 1:end]
+    libs = []
+    for lib in libraries_line.split(";"):
+        if lib.startswith("LLVM"): # if LLVM<smth> this is a dependency, no linkopt
+            continue
+        if lib.find(".") > -1: # there is an extension, so it is no linkopt
+            continue
+        libs.append("-l" + lib if not lib.startswith("-l") else lib)
+
+    return libs
+
 def _enable_local_z3(repository_ctx):
     """Returns whether the Z3 Solver is enabled. The solver is
        enabled if the _Z3_INSTALL_PREFIX environment variable
@@ -931,7 +981,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_SUPPORT_LIB}":
             _llvm_get_library_rule(ctx, "llvm_support", "LLVMSupport",
                 ["llvm_demangle"] + (["z3_solver"] if _enable_local_z3(ctx) else []),
-                ["-lpthread"] if not _is_windows(ctx) else []),
+                _llvm_get_link_opts(ctx)),
         "%{LLVM_SYMBOLIZE_LIB}":
             _llvm_get_library_rule(ctx, "llvm_symbolize", "LLVMSymbolize",
                 ["llvm_debug_info_dwarf", "llvm_debug_info_pdb", "llvm_demangle",
