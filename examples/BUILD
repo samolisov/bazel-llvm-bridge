@@ -1,5 +1,5 @@
 ##
-## Build - using an external prebuilt llvm
+## Build - examples of using an external prebuilt llvm
 ##
 
 config_setting(
@@ -29,16 +29,16 @@ config_setting(
 cc_binary(
     name = 'llvm_bb_counter',
     srcs = [
-        "src/llvm_bb_counter.cc",
+        "llvm/llvm_bb_counter.cc",
     ],
     copts = select({
-        "@llvm_bazel_bridge//:linux_x86_64": [
+        ":linux_x86_64": [
             "-fno-rtti",
         ],
-        "@llvm_bazel_bridge//:macos": [
+        ":macos": [
             "-fno-rtti",
         ],
-        "@llvm_bazel_bridge//:windows": [],
+        ":windows": [],
         "//conditions:default": [],
     }),
     deps = [
@@ -51,16 +51,16 @@ cc_binary(
 cc_library(
     name = "llvm_exp_passes",
     srcs = [
-        "src/passes/function_argument_usage_pass.cc",
+        "llvm/function_argument_usage_pass.cc",
     ],
     copts = select({
-        "@llvm_bazel_bridge//:linux_x86_64": [
+        ":linux_x86_64": [
             "-fno-rtti",
         ],
-        "@llvm_bazel_bridge//:macos": [
+        ":macos": [
             "-fno-rtti",
         ],
-        "@llvm_bazel_bridge//:windows": [],
+        ":windows": [],
         "//conditions:default": [],
     }),
     deps = [
@@ -75,7 +75,7 @@ cc_library(
 cc_binary(
     name = "llvm_exp_passes_linked",
     srcs = [
-        "src/llvm_empty_main.cc",
+        "llvm/llvm_empty_main.cc",
     ],
     deps = [
         ":llvm_exp_passes",
@@ -86,26 +86,26 @@ cc_binary(
 cc_binary(
     name = 'clang_list_methods',
     srcs = [
-        "src/clang_list_methods.cc",
+        "clang/clang_list_methods.cc",
     ],
     copts = select({
-        "@llvm_bazel_bridge//:linux_x86_64": [
+        ":linux_x86_64": [
             "-fno-rtti",
         ],
-        "@llvm_bazel_bridge//:macos": [
+        ":macos": [
             "-fno-rtti",
         ],
-        "@llvm_bazel_bridge//:windows": [],
+        ":windows": [],
         "//conditions:default": [],
     }),
     data = select({
-        "@llvm_bazel_bridge//:linux_x86_64": [
+        ":linux_x86_64": [
             "copy_local_llvm_shared_lin",
         ],
-        "@llvm_bazel_bridge//:macos": [
+        ":macos": [
             "copy_local_llvm_shared_mac",
         ],
-        "@llvm_bazel_bridge//:windows": [
+        ":windows": [
             "copy_local_llvm_shared_win",
         ],
         "//conditions:default": [],
@@ -118,13 +118,13 @@ cc_binary(
         "@local_llvm//:llvm_support",
     ],
     linkopts = select({
-        "@llvm_bazel_bridge//:linux_x86_64": [
+        ":linux_x86_64": [
             "-Wl,-R -Wl,."
         ],
-        "@llvm_bazel_bridge//:macos": [
+        ":macos": [
             "-Wl,-R -Wl,."
         ],
-        "@llvm_bazel_bridge//:windows": [
+        ":windows": [
         ],
         "//conditions:default": [],
     }),
