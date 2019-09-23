@@ -111,8 +111,9 @@ enum CXChildVisitResult visitFunction(CXCursor cursor, CXCursor parent, CXClient
 int main(int argc, char** argv) {
     cl::ParseCommandLineOptions(argc, argv, "AST Traversal Example");
     CXIndex index = clang_createIndex(0, 0);
+    std::string llvm_include = std::string("-I") + LLVM_INCLUDE_DIR;
     const char *args[] = {
-        (std::string("-I") + LLVM_INCLUDE_DIR).c_str(),
+        llvm_include.c_str(),
         "-I./include"
     };
 
