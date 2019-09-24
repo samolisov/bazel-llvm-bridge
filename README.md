@@ -41,12 +41,13 @@ In order to use any LLVM libraries in your targets, add the following to your
 `WORKSPACE` file:
 
 ```bzl
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-git_repository(
+http_archive(
     name = "bazel_llvm_bridge",
-    remote = "https://github.com/samolisov/bazel-llvm-bridge.git",
-    tag = "release/8-01",
+    sha256 = "640a55972267af640f7c1a42fe98fd9b804c4dbe9c156d5079c67b4f4c05e836",
+    strip_prefix = "bazel-llvm-bridge-release-8-01",
+    url = "https://github.com/samolisov/bazel-llvm-bridge/archive/release/8-01.zip",
 )
 
 load("@bazel_llvm_bridge//llvm:llvm_configure.bzl", "llvm_configure")
