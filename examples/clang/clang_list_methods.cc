@@ -111,13 +111,13 @@ enum CXChildVisitResult visitFunction(CXCursor cursor, CXCursor parent, CXClient
 int main(int argc, char** argv) {
     cl::ParseCommandLineOptions(argc, argv, "AST Traversal Example");
     CXIndex index = clang_createIndex(0, 0);
-    std::string llvm_include = std::string("-I") + LLVM_INCLUDE_DIR;
     const char *args[] = {
-        llvm_include.c_str(),
+        CLANG_LIB_INCLUDE_COMMAND_ARG,
+        LLVM_INCLUDE_COMMAND_ARG,
         "-I./include"
     };
 
-    CXTranslationUnit translationUnit = clang_parseTranslationUnit(index, FileName.c_str(), args, 2,
+    CXTranslationUnit translationUnit = clang_parseTranslationUnit(index, FileName.c_str(), args, 3,
         NULL, 0, CXTranslationUnit_None); // CXTranslationUnit_SkipFunctionBodies doesn't parse bodies and we
                                           // won't able to recognize if a function is a definition.
     CXCursor cursor = clang_getTranslationUnitCursor(translationUnit);
