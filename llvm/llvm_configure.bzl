@@ -422,6 +422,15 @@ def _llvm_get_config_genrule(
     current_dir = repository_ctx.path(".")
     llvm_include_dir = "%s/include" % current_dir
     llvm_library_dir = "%s/lib" % current_dir
+    clang_include_parent_dir = "%s/clang" % llvm_library_dir
+    clang_include_parent_path = repository_ctx.path(clang_include_parent_dir)
+    clang_exists = clang_include_parent_path.exists
+    if clang_exists:
+        clang_subdirs = clang_include_parent_path.readdir()
+        if len(clang_subdirs) > 0:
+            clang_include_dir = "%s/include" % clang_subdirs[0]
+        else:
+            clang_exists = False
     config_file_path = config_file_dir + '/' + config_file_name
     command = ("echo '/* This generated file is for internal use. " +
         "Do not include it from headers. */\n" +
@@ -430,7 +439,11 @@ def _llvm_get_config_genrule(
         "#else\n" +
         "#define LLVM_CONFIG_H\n" +
         "#define LLVM_INCLUDE_DIR \"" + llvm_include_dir + "\"\n" +
+        "#define LLVM_INCLUDE_COMMAND_ARG \"-I" + llvm_include_dir + "\"\n" +
         "#define LLVM_LIBRARY_DIR \"" + llvm_library_dir + "\"\n" +
+        ("#define CLANG_LIB_INCLUDE_DIR \"" + clang_include_dir + "\"\n" +
+         "#define CLANG_LIB_INCLUDE_COMMAND_ARG \"-I" + clang_include_dir + "\"\n"
+         if clang_exists else "") +
         "#endif /* LLVM_CONFIG_H */\n' > $@")
 
     return (
