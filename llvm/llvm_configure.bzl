@@ -296,14 +296,71 @@ def _get_library_for_dirs(
         copts,
         linkopts)
 
+def _llvm_get_rule_name(
+        prefix_dict,
+        name):
+    """Returns a customized name of a rule. When the prefix matches a key
+       from 'prefix_dict', the prefix will be replaced with the
+       'prefix_dict[key]' value.
+
+    Args:
+        prefix_dict: the dictionary of library name prefixes.
+        name: rule name.
+    Returns:
+        customized name when the prefix is replaces with a value from
+        'prefix_dict'.
+    """
+    concat_format = "%s%s"
+    if name.startswith("llvm_"):
+        return concat_format % (prefix_dict["llvm"], name[len("llvm_"):])
+    if name.startswith("clang_"):
+        return concat_format % (prefix_dict["clang"], name[len("clang_"):])
+    return name
+
+def _llvm_get_rule_names(
+        prefix_dict,
+        names):
+    """Returns a list of customized rule names. When the prefix
+       of an element of the list matches a key from 'prefix_dict',
+       the prefix will be replaced with the 'prefix_dict[key]' value.
+
+    Args:
+        prefix_dict: the dictionary of library name prefixes.
+        names: list of rule names.
+    Returns:
+        customized names when the prefix is replaces with a value from
+        'prefix_dict'.
+    """
+    return [_llvm_get_rule_name(prefix_dict, name) for name in names]
+
+
+def _llvm_check_duplicated_prefixes(prefix_dict):
+    """Fails when 'prefix_dict' contains keys with the same
+       values.
+
+    Args:
+        prefix_dict: the dictionary of library name prefixes.
+    """
+    for a_key in prefix_dict:
+        for b_key in prefix_dict:
+            if a_key == b_key:
+                break
+            if prefix_dict[a_key] == prefix_dict[b_key]:
+                _fail("\n".join([
+                    "Each component of clang/llvm stack must have a unique prefix.",
+                    "Prefixes for '%s' and '%s' are the same." % (a_key, b_key)
+                ]))
+
 def _llvm_get_include_rule(
         repository_ctx,
+        prefix_dict,
         name,
         include_local_dirs):
     """Returns a cc_library to include an LLVM header directory
 
     Args:
         repository_ctx: the repository_ctx object.
+        prefix_dict: the dictionary of library name prefixes.
         name: rule name.
         include_local_dirs: names of local directories inside the 'include' one
                             of the local LLVM installation.
@@ -318,7 +375,7 @@ def _llvm_get_include_rule(
     if len(llvm_include_dirs) > 0:
         llvm_include_rule = _get_library_for_dirs(
             repository_ctx,
-            name,
+            _llvm_get_rule_name(prefix_dict, name),
             [],  # LLVM's include is the public interface
             llvm_include_dirs,
             ["include"]
@@ -331,6 +388,7 @@ def _llvm_get_include_rule(
 
 def _llvm_get_library_rule(
         repository_ctx,
+        prefix_dict,
         name,
         llvm_library_file,
         deps = [],
@@ -341,6 +399,7 @@ def _llvm_get_library_rule(
 
     Args:
         repository_ctx: the repository_ctx object.
+        prefix_dict: the dictionary of library name prefixes.
         name: rule name.
         llvm_library_file: an LLVM library file name without extension.
         deps: names of cc_library targets this one depends on.
@@ -355,9 +414,9 @@ def _llvm_get_library_rule(
     library_file = "%s/%s%s.%s" % (directory, library_prefix, llvm_library_file, library_ext)
     if repository_ctx.path(library_file).exists:
         llvm_library_rule = _cc_library(
-            name = name,
+            name = _llvm_get_rule_name(prefix_dict, name),
             srcs = [library_file],
-            deps = deps,
+            deps = _llvm_get_rule_names(prefix_dict, deps),
             linkopts = linkopts,
             )
     else:
@@ -366,6 +425,7 @@ def _llvm_get_library_rule(
 
 def _llvm_get_shared_library_rule(
         repository_ctx,
+        prefix_dict,
         name,
         llvm_library_file,
         ignore_prefix = False,
@@ -376,6 +436,7 @@ def _llvm_get_shared_library_rule(
 
     Args:
         repository_ctx: the repository_ctx object.
+        prefix_dict: the dictionary of library name prefixes.
         name: rule name.
         llvm_library_file: an LLVM library file name without extension.
         ignore_prefix: if True, no lib prefix must be added on any host OS.
@@ -395,7 +456,7 @@ def _llvm_get_shared_library_rule(
     library_file = "lib/%s%s.%s" % (library_prefix, llvm_library_file, library_ext)
     if repository_ctx.path(library_file).exists:
         llvm_library_rule = _cc_library(
-            name = name,
+            name = _llvm_get_rule_name(prefix_dict, name),
             srcs = [library_file],
             )
     else:
@@ -404,6 +465,7 @@ def _llvm_get_shared_library_rule(
 
 def _llvm_get_config_genrule(
         repository_ctx,
+        prefix_dict,
         name,
         config_file_dir,
         config_file_name):
@@ -413,6 +475,7 @@ def _llvm_get_config_genrule(
 
     Args:
         repository_ctx: the repository_ctx object.
+        prefix_dict: the dictionary of library name prefixes.
         name: rule name.
         config_file_dir: the directory where the header will appear.
         config_file_name: the name of the generated header.
@@ -449,7 +512,7 @@ def _llvm_get_config_genrule(
     return (
         "genrule(\n" +
         '    name = "' +
-        name + '",\n' +
+        _llvm_get_rule_name(prefix_dict, name) + '",\n' +
         "    outs = [\n" +
         '        "' + config_file_path + '",' +
         "\n    ],\n" +
@@ -461,6 +524,7 @@ def _llvm_get_config_genrule(
 
 def _llvm_get_config_library_rule(
         repository_ctx,
+        prefix_dict,
         name,
         config_rule_name,
         config_file_dir):
@@ -469,6 +533,7 @@ def _llvm_get_config_library_rule(
 
     Args:
         repository_ctx: the repository_ctx object.
+        prefix_dict: the dictionary of library name prefixes.
         name: rule name.
         config_rule_name: the name of the rule that generates the file.
         config_file_dir: the directory where the header will appear.
@@ -476,14 +541,15 @@ def _llvm_get_config_library_rule(
         cc_library target that defines the library.
     """
     return _cc_library(
-        name = name,
-        srcs = [":" + config_rule_name],
+        name = _llvm_get_rule_name(prefix_dict, name),
+        srcs = [":" + _llvm_get_rule_name(prefix_dict, config_rule_name)],
         includes = [config_file_dir],
         linkstatic = True
         )
 
 def _llvm_get_shared_lib_genrule(
         repository_ctx,
+        prefix_dict,
         name,
         llvm_path,
         shared_library,
@@ -494,6 +560,7 @@ def _llvm_get_shared_lib_genrule(
 
     Args:
         repository_ctx: the repository_ctx object.
+        prefix_dict: the dictionary of library name prefixes.
         name: rule name.
         llvm_path: a path to a local LLVM installation.
         shared_library: an LLVM shared library file name without extension.
@@ -518,7 +585,7 @@ def _llvm_get_shared_lib_genrule(
     return (
         "genrule(\n" +
         '    name = "' +
-        name + '",\n' +
+        _llvm_get_rule_name(prefix_dict, name) + '",\n' +
         "    outs = [\n" +
         '        "' + library_file + '",' +
         "\n    ],\n" +
@@ -696,7 +763,14 @@ def _z3_get_libraries(repository_ctx, z3_path):
             return
 
 def _llvm_installed_impl(repository_ctx):
-    ctx = repository_ctx
+    # dictionary of prefixes, all targets will be named prefix_dictionary["llvm"]<target>
+    # for LLVM, prefix_dictionary["clang"]<target> for clang, etc.
+    prefix_dictionary = {
+        "llvm": repository_ctx.attr.llvm_prefix,
+        "clang": repository_ctx.attr.clang_prefix,
+    }
+    # if there are duplicated prefixes, fail.
+    _llvm_check_duplicated_prefixes(prefix_dictionary)
     llvm_path = repository_ctx.os.environ[_LLVM_INSTALL_PREFIX]
     repository_ctx.symlink("%s/include" % llvm_path, "include")
     repository_ctx.symlink("%s/lib" % llvm_path, "lib")
@@ -709,33 +783,43 @@ def _llvm_installed_impl(repository_ctx):
              "'%s' to the full path of the solver's local installation." % _Z3_INSTALL_PREFIX,
             ]))
     supported_targets = _llvm_get_target_list(repository_ctx)
+    ctx = repository_ctx
+    prx = prefix_dictionary
     _tpl(repository_ctx, "BUILD", {
         "%{CLANG_HEADERS_LIB}":
-             _llvm_get_include_rule(ctx, "clang_headers", ["clang", "clang-c"]),
+             _llvm_get_include_rule(ctx, prx, "clang_headers",
+                ["clang", "clang-c"]),
         "%{LLVM_HEADERS_LIB}":
-            _llvm_get_include_rule(ctx, "llvm_headers", ["llvm", "llvm-c"]),
+            _llvm_get_include_rule(ctx, prx, "llvm_headers",
+                ["llvm", "llvm-c"]),
 
         "%{CLANG_ANALYSIS_LIB}":
-            _llvm_get_library_rule(ctx, "clang_analysis", "clangAnalysis",
+            _llvm_get_library_rule(ctx, prx, "clang_analysis",
+                "clangAnalysis",
                 ["clang_ast", "clang_ast_matchers", "clang_basic",
                  "clang_lex", "llvm_support"]),
         "%{CLANG_ARCMIGRATE_LIB}":
-            _llvm_get_library_rule(ctx, "clang_arc_migrate", "clangARCMigrate",
+            _llvm_get_library_rule(ctx, prx, "clang_arc_migrate",
+                "clangARCMigrate",
                 ["clang_ast", "clang_analysis", "clang_basic", "clang_edit",
                  "clang_frontend", "clang_lex", "clang_rewrite", "clang_sema",
                  "clang_serialization", "llvm_support"]),
         "%{CLANG_AST_LIB}":
-            _llvm_get_library_rule(ctx, "clang_ast", "clangAST",
+            _llvm_get_library_rule(ctx, prx, "clang_ast",
+                "clangAST",
                 ["clang_basic", "clang_lex", "llvm_binary_format", "llvm_core",
                  "llvm_support"]),
         "%{CLANG_ASTMATCHERS_LIB}":
-            _llvm_get_library_rule(ctx, "clang_ast_matchers", "clangASTMatchers",
+            _llvm_get_library_rule(ctx, prx, "clang_ast_matchers",
+                "clangASTMatchers",
                 ["clang_ast", "clang_basic", "llvm_support"]),
         "%{CLANG_BASIC_LIB}":
-            _llvm_get_library_rule(ctx, "clang_basic", "clangBasic",
+            _llvm_get_library_rule(ctx, prx, "clang_basic",
+                "clangBasic",
                 ["llvm_core", "llvm_mc", "llvm_support"]),
         "%{CLANG_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "clang_code_gen", "clangCodeGen",
+            _llvm_get_library_rule(ctx, prx, "clang_code_gen",
+                "clangCodeGen",
                 ["clang_analysis", "clang_ast", "clang_ast_matchers",
                  "clang_basic", "clang_frontend", "clang_lex",
                  "clang_serialization", "llvm_analysis", "llvm_bit_reader",
@@ -748,50 +832,57 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_scalar_opts", "llvm_support", "llvm_target",
                  "llvm_transform_utils"]),
         "%{CLANG_CROSSTU_LIB}":
-            _llvm_get_library_rule(ctx, "clang_cross_tu", "clangCrossTU",
+            _llvm_get_library_rule(ctx, prx, "clang_cross_tu",
+                "clangCrossTU",
                 ["clang_ast", "clang_basic", "clang_frontend", "clang_index",
                  "llvm_support"]),
         "%{CLANG_DEPENDENCYSCANNING_LIB}":
-            _llvm_get_library_rule(ctx, "clang_dependency_scanning",
+            _llvm_get_library_rule(ctx, prx, "clang_dependency_scanning",
                 "clangDependencyScanning",
                 ["clang_ast", "clang_basic", "clang_driver", "clang_frontend",
                  "clang_frontend_tool", "clang_lex", "clang_parse",
                  "clang_serialization", "clang_tooling",
                  "llvm_core", "llvm_support"]),
         "%{CLANG_DIRECTORYWATCHER_LIB}":
-            _llvm_get_library_rule(ctx, "clang_directory_watcher",
+            _llvm_get_library_rule(ctx, prx, "clang_directory_watcher",
                 "clangDirectoryWatcher",
                 ["llvm_support"]),
         "%{CLANG_DRIVER_LIB}":
-            _llvm_get_library_rule(ctx, "clang_driver", "clangDriver",
+            _llvm_get_library_rule(ctx, prx, "clang_driver",
+                "clangDriver",
                 ["clang_basic", "llvm_binary_format", "llvm_option",
                  "llvm_support"],
                 ["-DEFAULTLIB:version.lib"] if _is_windows(ctx) else []),
         "%{CLANG_DYNAMICASTMATCHERS_LIB}":
-            _llvm_get_library_rule(ctx, "clang_dynamic_ast_matchers",
+            _llvm_get_library_rule(ctx, prx, "clang_dynamic_ast_matchers",
                 "clangDynamicASTMatchers",
                 ["clang_ast", "clang_ast_matchers", "clang_basic",
                  "llvm_support"]),
         "%{CLANG_EDIT_LIB}":
-            _llvm_get_library_rule(ctx, "clang_edit", "clangEdit",
+            _llvm_get_library_rule(ctx, prx, "clang_edit",
+                "clangEdit",
                 ["clang_ast", "clang_basic", "clang_lex", "llvm_support"]),
         "%{CLANG_FORMAT_LIB}":
-            _llvm_get_library_rule(ctx, "clang_format", "clangFormat",
+            _llvm_get_library_rule(ctx, prx, "clang_format",
+                "clangFormat",
                 ["clang_basic", "clang_lex", "clang_tooling_core",
                  "clang_tooling_inclusions", "llvm_support"]),
         "%{CLANG_FRONTEND_LIB}":
-            _llvm_get_library_rule(ctx, "clang_frontend", "clangFrontend",
+            _llvm_get_library_rule(ctx, prx, "clang_frontend",
+                "clangFrontend",
                 ["clang_ast", "clang_basic", "clang_driver", "clang_edit",
                  "clang_lex", "clang_parse", "clang_sema", "clang_serialization",
                  "llvm_bit_reader", "llvm_bitstream_reader", "llvm_option",
                  "llvm_profile_data", "llvm_support"]),
         "%{CLANG_FRONTENDTOOL_LIB}":
-            _llvm_get_library_rule(ctx, "clang_frontend_tool", "clangFrontendTool",
+            _llvm_get_library_rule(ctx, prx, "clang_frontend_tool",
+                "clangFrontendTool",
                 ["clang_basic", "clang_code_gen", "clang_driver", "clang_frontend",
                  "clang_rewrite_frontend", "clang_arc_migrate",
                  "clang_static_analyzer_frontend", "llvm_option", "llvm_support"]),
         "%{CLANG_HANDLECXX_LIB}":
-            _llvm_get_library_rule(ctx, "clang_handle_cxx", "clangHandleCXX",
+            _llvm_get_library_rule(ctx, prx, "clang_handle_cxx",
+                "clangHandleCXX",
                 ["clang_basic", "clang_code_gen", "clang_frontend", "clang_lex",
                  "clang_serialization", "clang_tooling", "llvm_support"
                 ] + (["llvm_aarch64_code_gen", "llvm_aarch64_asm_parser",
@@ -858,7 +949,8 @@ def _llvm_installed_impl(repository_ctx):
                       "llvm_xcore_disassembler", "llvm_xcore_info"
                      ] if "XCore" in supported_targets else [])),
         "%{CLANG_HANDLELLVM_LIB}":
-            _llvm_get_library_rule(ctx, "clang_handle_llvm", "clangHandleLLVM",
+            _llvm_get_library_rule(ctx, prx, "clang_handle_llvm",
+                "clangHandleLLVM",
                 ["llvm_analysis", "llvm_code_gen", "llvm_core",
                  "llvm_execution_engine", "llvm_ipo", "llvm_ir_reader",
                  "llvm_mc", "llvm_mc_jit", "llvm_object", "llvm_runtime_dy_ld",
@@ -869,336 +961,420 @@ def _llvm_installed_impl(repository_ctx):
                       "llvm_x86_info", "llvm_x86_utils"
                      ] if "X86" in supported_targets else [])),
         "%{CLANG_INDEX_LIB}":
-            _llvm_get_library_rule(ctx, "clang_index", "clangIndex",
+            _llvm_get_library_rule(ctx, prx, "clang_index",
+                "clangIndex",
                 ["clang_ast", "clang_basic", "clang_format", "clang_frontend",
                  "clang_lex", "clang_rewrite", "clang_serialization",
                  "clang_tooling_core", "llvm_core", "llvm_support"]),
         "%{CLANG_LEX_LIB}":
-            _llvm_get_library_rule(ctx, "clang_lex", "clangLex",
+            _llvm_get_library_rule(ctx, prx, "clang_lex",
+                "clangLex",
                 ["clang_basic", "llvm_support"]),
         "%{CLANG_LIBCLANG_LIB}":
-            _llvm_get_shared_library_rule(ctx, "clang_libclang", "libclang",
+            _llvm_get_shared_library_rule(ctx, prx, "clang_libclang",
+                "libclang",
                 ignore_prefix = True),
         "%{CLANG_LIBCLANG_COPY_GENRULE}":
-            _llvm_get_shared_lib_genrule(ctx, "clang_copy_libclang",
+            _llvm_get_shared_lib_genrule(ctx, prx, "clang_copy_libclang",
                 llvm_path, "libclang", ignore_prefix = True),
         "%{CLANG_LIBCLANGCPP_LIB}":
-            _llvm_get_shared_library_rule(ctx, "clang_libclang_cpp", "libclang-cpp",
-                ignore_prefix = True, nix_only = True),
+            _llvm_get_shared_library_rule(ctx, prx, "clang_libclang_cpp",
+                "libclang-cpp", ignore_prefix = True, nix_only = True),
         "%{CLANG_LIBCLANGCPP_COPY_GENRULE}":
-            _llvm_get_shared_lib_genrule(ctx, "clang_copy_libclang_cpp",
+            _llvm_get_shared_lib_genrule(ctx, prx, "clang_copy_libclang_cpp",
                 llvm_path, "libclang-cpp", ignore_prefix = True, nix_only=True),
         "%{CLANG_PARSE_LIB}":
-            _llvm_get_library_rule(ctx, "clang_parse", "clangParse",
+            _llvm_get_library_rule(ctx, prx, "clang_parse",
+                "clangParse",
                 ["clang_ast", "clang_basic", "clang_lex", "clang_sema",
                  "llvm_mc", "llvm_mc_parser", "llvm_support"]),
         "%{CLANG_REWRITE_LIB}":
-            _llvm_get_library_rule(ctx, "clang_rewrite", "clangRewrite",
+            _llvm_get_library_rule(ctx, prx, "clang_rewrite",
+                "clangRewrite",
                 ["clang_basic", "clang_lex", "llvm_support"]),
         "%{CLANG_REWRITEFRONTEND_LIB}":
-            _llvm_get_library_rule(ctx, "clang_rewrite_frontend",
+            _llvm_get_library_rule(ctx, prx, "clang_rewrite_frontend",
                 "clangRewriteFrontend",
                 ["clang_ast", "clang_basic", "clang_edit", "clang_frontend",
                  "clang_lex", "clang_rewrite", "clang_serialization",
                  "llvm_support"]),
         "%{CLANG_SEMA_LIB}":
-            _llvm_get_library_rule(ctx, "clang_sema", "clangSema",
+            _llvm_get_library_rule(ctx, prx, "clang_sema",
+                "clangSema",
                 ["clang_ast", "clang_analysis", "clang_basic",
                  "clang_edit", "clang_lex", "llvm_support"]),
         "%{CLANG_SERIALIZATION_LIB}":
-            _llvm_get_library_rule(ctx, "clang_serialization", "clangSerialization",
+            _llvm_get_library_rule(ctx, prx, "clang_serialization",
+                "clangSerialization",
                 ["clang_ast", "clang_basic", "clang_lex", "clang_sema",
                  "llvm_bit_reader", "llvm_bitstream_reader", "llvm_support"]),
         "%{CLANG_STATICANALYZERCHECKERS_LIB}":
-            _llvm_get_library_rule(ctx, "clang_static_analyzer_checkers",
+            _llvm_get_library_rule(ctx, prx, "clang_static_analyzer_checkers",
                 "clangStaticAnalyzerCheckers",
                 ["clang_ast", "clang_ast_matchers", "clang_analysis", "clang_basic",
                  "clang_lex", "clang_static_analyzer_core", "llvm_support"]),
         "%{CLANG_STATICANALYZERCORE_LIB}":
-            _llvm_get_library_rule(ctx, "clang_static_analyzer_core",
+            _llvm_get_library_rule(ctx, prx, "clang_static_analyzer_core",
                 "clangStaticAnalyzerCore",
                 ["clang_ast", "clang_ast_matchers", "clang_analysis", "clang_basic",
                  "clang_cross_tu", "clang_frontend", "clang_lex", "clang_rewrite",
                  "llvm_support"]),
         "%{CLANG_STATICANALYZERFRONTEND_LIB}":
-            _llvm_get_library_rule(ctx, "clang_static_analyzer_frontend",
+            _llvm_get_library_rule(ctx, prx, "clang_static_analyzer_frontend",
                 "clangStaticAnalyzerFrontend",
                 ["clang_ast", "clang_analysis", "clang_basic", "clang_cross_tu",
                  "clang_frontend", "clang_lex", "clang_static_analyzer_checkers",
                  "clang_static_analyzer_core", "llvm_support"]),
         "%{CLANG_TOOLING_LIB}":
-            _llvm_get_library_rule(ctx, "clang_tooling", "clangTooling",
+            _llvm_get_library_rule(ctx, prx, "clang_tooling",
+                "clangTooling",
                 ["clang_ast", "clang_ast_matchers", "clang_basic", "clang_driver",
                  "clang_format", "clang_frontend", "clang_lex", "clang_rewrite",
                  "clang_serialization", "clang_tooling_core",
                  "llvm_option", "llvm_support"]),
         "%{CLANG_TOOLINGASTDIFF_LIB}":
-            _llvm_get_library_rule(ctx, "clang_tooling_ast_diff",
+            _llvm_get_library_rule(ctx, prx, "clang_tooling_ast_diff",
                 "clangToolingASTDiff",
                 ["clang_ast", "clang_basic", "clang_lex", "llvm_support"]),
         "%{CLANG_TOOLINGCORE_LIB}":
-            _llvm_get_library_rule(ctx, "clang_tooling_core", "clangToolingCore",
+            _llvm_get_library_rule(ctx, prx, "clang_tooling_core",
+                "clangToolingCore",
                 ["clang_ast", "clang_basic", "clang_lex", "clang_rewrite",
                  "llvm_support"]),
         "%{CLANG_TOOLINGINCLUSIONS_LIB}":
-            _llvm_get_library_rule(ctx, "clang_tooling_inclusions",
+            _llvm_get_library_rule(ctx, prx, "clang_tooling_inclusions",
                 "clangToolingInclusions",
                 ["clang_basic", "clang_lex", "clang_rewrite",
                  "clang_tooling_core", "llvm_support"]),
         "%{CLANG_TOOLINGREFACTORING_LIB}":
-            _llvm_get_library_rule(ctx, "clang_tooling_refactoring",
+            _llvm_get_library_rule(ctx, prx, "clang_tooling_refactoring",
                 "clangToolingRefactoring",
                 ["clang_ast", "clang_ast_matchers", "clang_basic", "clang_format",
                  "clang_index", "clang_lex", "clang_rewrite",
                  "clang_tooling_core", "llvm_support"]),
         "%{CLANG_TOOLINGSYNTAX_LIB}":
-            _llvm_get_library_rule(ctx, "clang_tooling_syntax", "clangToolingSyntax",
+            _llvm_get_library_rule(ctx, prx, "clang_tooling_syntax",
+                "clangToolingSyntax",
                 ["clang_ast", "clang_basic", "clang_frontend", "clang_lex",
                  "clang_tooling_core", "llvm_support"]),
 
         "%{LLVM_AGGRESSIVEINSTCOMBINE_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_aggressive_inst_combine",
+            _llvm_get_library_rule(ctx, prx, "llvm_aggressive_inst_combine",
                 "LLVMAggressiveInstCombine",
-                ["llvm_analysis", "llvm_core", "llvm_support", "llvm_transform_utils"]),
+                ["llvm_analysis", "llvm_core", "llvm_support",
+                 "llvm_transform_utils"]),
         "%{LLVM_ANALYSIS_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_analysis", "LLVMAnalysis",
+            _llvm_get_library_rule(ctx, prx, "llvm_analysis",
+                "LLVMAnalysis",
                 ["llvm_binary_format", "llvm_core", "llvm_object", "llvm_profile_data",
                  "llvm_support"]),
         "%{LLVM_ASMPRARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_asm_parser", "LLVMAsmParser",
+            _llvm_get_library_rule(ctx, prx, "llvm_asm_parser",
+                "LLVMAsmParser",
                 ["llvm_binary_format", "llvm_core", "llvm_support"]),
         "%{LLVM_ASMPRINTER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_asm_printer", "LLVMAsmPrinter",
+            _llvm_get_library_rule(ctx, prx, "llvm_asm_printer",
+                "LLVMAsmPrinter",
                 ["llvm_analysis", "llvm_binary_format", "llvm_code_gen", "llvm_core",
                  "llvm_debug_info_codeview", "llvm_debug_info_dwarf", "llvm_debug_info_msf",
                  "llvm_mc", "llvm_mc_parser", "llvm_remarks", "llvm_support", "llvm_target"]),
         "%{LLVM_BINARYFORMAT_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_binary_format", "LLVMBinaryFormat",
-                ["llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_binary_format",
+                "LLVMBinaryFormat", ["llvm_support"]),
         "%{LLVM_BITREADER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_bit_reader", "LLVMBitReader",
+            _llvm_get_library_rule(ctx, prx, "llvm_bit_reader",
+                "LLVMBitReader",
                 ["llvm_bitstream_reader", "llvm_core", "llvm_support"]),
         "%{LLVM_BITWRITER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_bit_writer", "LLVMBitWriter",
-                ["llvm_analysis", "llvm_core", "llvm_mc", "llvm_object", "llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_bit_writer",
+                "LLVMBitWriter",
+                ["llvm_analysis", "llvm_core", "llvm_mc", "llvm_object",
+                 "llvm_support"]),
         "%{LLVM_BITSTREAMREADER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_bitstream_reader", "LLVMBitstreamReader",
-                ["llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_bitstream_reader",
+                "LLVMBitstreamReader", ["llvm_support"]),
         "%{LLVM_C_LIB}":
-            _llvm_get_shared_library_rule(ctx, "llvm_c", "LLVM-C", win_only = True),
+            _llvm_get_shared_library_rule(ctx, prx, "llvm_c", "LLVM-C",
+                win_only = True),
         "%{LLVM_C_COPY_GENRULE}":
-            _llvm_get_shared_lib_genrule(ctx, "llvm_copy_c", llvm_path,
-                "LLVM-C", win_only = True),
+            _llvm_get_shared_lib_genrule(ctx, prx, "llvm_copy_c",
+                llvm_path, "LLVM-C", win_only = True),
         "%{LLVM_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_code_gen", "LLVMCodeGen",
-                ["llvm_analysis", "llvm_bit_reader", "llvm_bit_writer", "llvm_core",
-                 "llvm_mc", "llvm_profile_data", "llvm_scalar_opts", "llvm_support",
-                 "llvm_target", "llvm_transform_utils"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_code_gen",
+                "LLVMCodeGen",
+                ["llvm_analysis", "llvm_bit_reader", "llvm_bit_writer",
+                 "llvm_core", "llvm_mc", "llvm_profile_data",
+                 "llvm_scalar_opts", "llvm_support", "llvm_target",
+                 "llvm_transform_utils"]),
         "%{LLVM_CORE_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_core", "LLVMCore",
+            _llvm_get_library_rule(ctx, prx, "llvm_core",
+                "LLVMCore",
                 ["llvm_binary_format", "llvm_remarks", "llvm_support"]),
         "%{LLVM_COROUTINES_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_coroutines", "LLVMCoroutines",
+            _llvm_get_library_rule(ctx, prx, "llvm_coroutines",
+                "LLVMCoroutines",
                 ["llvm_analysis", "llvm_core", "llvm_scalar_opts", "llvm_support",
                  "llvm_transform_utils", "llvm_ipo"]),
         "%{LLVM_COVERAGE_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_coverage", "LLVMCoverage",
+            _llvm_get_library_rule(ctx, prx, "llvm_coverage",
+                "LLVMCoverage",
                 ["llvm_core", "llvm_object", "llvm_profile_data", "llvm_support"]),
         "%{LLVM_DEBUGINFOCODEVIEW_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_debug_info_codeview", "LLVMDebugInfoCodeView",
+            _llvm_get_library_rule(ctx, prx, "llvm_debug_info_codeview",
+                "LLVMDebugInfoCodeView",
                 ["llvm_debug_info_msf", "llvm_support"]),
         "%{LLVM_DEBUGINFODWARF_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_debug_info_dwarf", "LLVMDebugInfoDWARF",
+            _llvm_get_library_rule(ctx, prx, "llvm_debug_info_dwarf",
+                "LLVMDebugInfoDWARF",
                 ["llvm_binary_format", "llvm_mc", "llvm_object", "llvm_support"]),
         "%{LLVM_DEBUGINFOGSYM_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_debug_info_gsym", "LLVMDebugInfoGSYM",
-                ["llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_debug_info_gsym",
+                "LLVMDebugInfoGSYM", ["llvm_support"]),
         "%{LLVM_DEBUGINFOMSF_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_debug_info_msf", "LLVMDebugInfoMSF",
-                ["llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_debug_info_msf",
+                "LLVMDebugInfoMSF", ["llvm_support"]),
         "%{LLVM_DEBUGINFOPDB_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_debug_info_pdb", "LLVMDebugInfoPDB",
-                ["llvm_debug_info_codeview", "llvm_debug_info_msf", "llvm_object",
-                 "llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_debug_info_pdb",
+                "LLVMDebugInfoPDB",
+                ["llvm_debug_info_codeview", "llvm_debug_info_msf",
+                 "llvm_object", "llvm_support"]),
         "%{LLVM_DEMANGLE_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_demangle", "LLVMDemangle"),
+            _llvm_get_library_rule(ctx, prx, "llvm_demangle",
+                "LLVMDemangle"),
         "%{LLVM_DLLTOOLDRIVER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_dll_tool_driver", "LLVMDlltoolDriver",
+            _llvm_get_library_rule(ctx, prx, "llvm_dll_tool_driver",
+                "LLVMDlltoolDriver",
                 ["llvm_object", "llvm_option", "llvm_support"]),
         "%{LLVM_EXECUTION_ENGINE_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_execution_engine", "LLVMExecutionEngine",
+            _llvm_get_library_rule(ctx, prx, "llvm_execution_engine",
+                "LLVMExecutionEngine",
                 ["llvm_core", "llvm_mc", "llvm_object", "llvm_runtime_dy_ld",
                  "llvm_support", "llvm_target"]),
         "%{LLVM_FUZZMUTATE_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_fuzz_mutate", "LLVMFuzzMutate",
-                ["llvm_analysis", "llvm_bit_reader", "llvm_bit_writer", "llvm_core",
-                 "llvm_scalar_opts", "llvm_support", "llvm_target"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_fuzz_mutate",
+                "LLVMFuzzMutate",
+                ["llvm_analysis", "llvm_bit_reader", "llvm_bit_writer",
+                 "llvm_core", "llvm_scalar_opts", "llvm_support",
+                 "llvm_target"]),
         "%{LLVM_GLOBALISEL_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_global_isel", "LLVMGlobalISel",
+            _llvm_get_library_rule(ctx, prx, "llvm_global_isel",
+                "LLVMGlobalISel",
                 ["llvm_analysis", "llvm_code_gen", "llvm_core", "llvm_mc",
                  "llvm_selection_dag", "llvm_support", "llvm_target",
                  "llvm_transform_utils"]),
         "%{LLVM_INSTCOMBINE_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_inst_combine", "LLVMInstCombine",
-                ["llvm_analysis", "llvm_core", "llvm_support", "llvm_transform_utils"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_inst_combine",
+                "LLVMInstCombine",
+                ["llvm_analysis", "llvm_core", "llvm_support",
+                 "llvm_transform_utils"]),
         "%{LLVM_INSTRUMENTATION_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_instrumentation", "LLVMInstrumentation",
+            _llvm_get_library_rule(ctx, prx, "llvm_instrumentation",
+                "LLVMInstrumentation",
                 ["llvm_analysis", "llvm_core", "llvm_mc", "llvm_profile_data",
                  "llvm_support", "llvm_transform_utils"]),
         "%{LLVM_INTERPRETER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_interpreter", "LLVMInterpreter",
-                ["llvm_code_gen", "llvm_core", "llvm_execution_engine", "llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_interpreter",
+                "LLVMInterpreter",
+                ["llvm_code_gen", "llvm_core", "llvm_execution_engine",
+                 "llvm_support"]),
         "%{LLVM_IRREADER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_ir_reader", "LLVMIRReader",
-                ["llvm_asm_parser", "llvm_bit_reader", "llvm_core", "llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_ir_reader",
+                "LLVMIRReader",
+                ["llvm_asm_parser", "llvm_bit_reader", "llvm_core",
+                 "llvm_support"]),
         "%{LLVM_IPO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_ipo", "LLVMipo",
-                ["llvm_aggressive_inst_combine", "llvm_analysis", "llvm_bit_reader",
-                 "llvm_bit_writer", "llvm_core", "llvm_ir_reader", "llvm_inst_combine",
-                 "llvm_instrumentation", "llvm_linker", "llvm_object", "llvm_profile_data",
+            _llvm_get_library_rule(ctx, prx, "llvm_ipo",
+                "LLVMipo",
+                ["llvm_aggressive_inst_combine", "llvm_analysis",
+                 "llvm_bit_reader", "llvm_bit_writer", "llvm_core",
+                 "llvm_ir_reader", "llvm_inst_combine","llvm_instrumentation",
+                 "llvm_linker", "llvm_object", "llvm_profile_data",
                  "llvm_scalar_opts", "llvm_support", "llvm_transform_utils",
                  "llvm_vectorize"]),
         "%{LLVM_JITLINK_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_jit_link", "LLVMJITLink",
+            _llvm_get_library_rule(ctx, prx, "llvm_jit_link",
+                "LLVMJITLink",
                 ["llvm_binary_format", "llvm_object", "llvm_support"]),
         "%{LLVM_LIBDRIVER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_lib_driver", "LLVMLibDriver",
+            _llvm_get_library_rule(ctx, prx, "llvm_lib_driver",
+                "LLVMLibDriver",
                 ["llvm_binary_format", "llvm_bit_reader", "llvm_object",
                  "llvm_option", "llvm_support"]),
         "%{LLVM_LINEEDITOR_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_line_editor", "LLVMLineEditor",
-                ["llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_line_editor",
+                "LLVMLineEditor", ["llvm_support"]),
         "%{LLVM_LINKER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_linker", "LLVMLinker",
+            _llvm_get_library_rule(ctx, prx, "llvm_linker",
+                "LLVMLinker",
                 ["llvm_core", "llvm_support", "llvm_transform_utils"]),
         "%{LLVM_LTO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_lto", "LLVMLTO",
-                ["llvm_aggressive_inst_combine", "llvm_analysis", "llvm_bit_reader",
-                 "llvm_bit_writer", "llvm_code_gen", "llvm_core", "llvm_inst_combine",
-                 "llvm_linker", "llvm_mc", "llvm_objc_arc_opts", "llvm_object",
-                 "llvm_passes", "llvm_remarks", "llvm_scalar_opts", "llvm_support",
+            _llvm_get_library_rule(ctx, prx, "llvm_lto",
+                "LLVMLTO",
+                ["llvm_aggressive_inst_combine", "llvm_analysis",
+                 "llvm_bit_reader", "llvm_bit_writer", "llvm_code_gen",
+                 "llvm_core", "llvm_inst_combine", "llvm_linker", "llvm_mc",
+                 "llvm_objc_arc_opts", "llvm_object", "llvm_passes",
+                 "llvm_remarks", "llvm_scalar_opts", "llvm_support",
                  "llvm_target", "llvm_transform_utils", "llvm_ipo"]),
         "%{LLVM_MC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_mc", "LLVMMC",
-                ["llvm_binary_format", "llvm_debug_info_codeview", "llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_mc",
+                "LLVMMC",
+                ["llvm_binary_format", "llvm_debug_info_codeview",
+                 "llvm_support"]),
         "%{LLVM_MCA_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_mca", "LLVMMCA",
+            _llvm_get_library_rule(ctx, prx, "llvm_mca",
+                "LLVMMCA",
                 ["llvm_mc", "llvm_support"]),
         "%{LLVM_MCJIT_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_mc_jit", "LLVMMCJIT",
-                ["llvm_core", "llvm_execution_engine", "llvm_object", "llvm_runtime_dy_ld",
-                 "llvm_support", "llvm_target"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_mc_jit",
+                "LLVMMCJIT",
+                ["llvm_core", "llvm_execution_engine", "llvm_object",
+                 "llvm_runtime_dy_ld", "llvm_support", "llvm_target"]),
         "%{LLVM_MCPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_mc_parser", "LLVMMCParser",
+            _llvm_get_library_rule(ctx, prx, "llvm_mc_parser",
+                "LLVMMCParser",
                 ["llvm_mc", "llvm_support"]),
         "%{LLVM_MCDISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_mc_disassembler", "LLVMMCDisassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_mc_disassembler",
+                "LLVMMCDisassembler",
                 ["llvm_mc", "llvm_support"]),
         "%{LLVM_MIRPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_mir_parser", "LLVMMIRParser",
-                ["llvm_asm_parser", "llvm_binary_format", "llvm_code_gen", "llvm_core",
-                 "llvm_mc", "llvm_support", "llvm_target"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_mir_parser",
+                "LLVMMIRParser",
+                ["llvm_asm_parser", "llvm_binary_format", "llvm_code_gen",
+                 "llvm_core", "llvm_mc", "llvm_support", "llvm_target"]),
         "%{LLVM_OBJCARCOPTS_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_objc_arc_opts", "LLVMObjCARCOpts",
-                ["llvm_analysis", "llvm_core", "llvm_support", "llvm_transform_utils"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_objc_arc_opts",
+                "LLVMObjCARCOpts",
+                ["llvm_analysis", "llvm_core", "llvm_support",
+                 "llvm_transform_utils"]),
         "%{LLVM_OBJECT_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_object", "LLVMObject",
-                ["llvm_binary_format", "llvm_bit_reader", "llvm_core", "llvm_mc",
-                 "llvm_mc_parser", "llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_object",
+                "LLVMObject",
+                ["llvm_binary_format", "llvm_bit_reader", "llvm_core",
+                 "llvm_mc", "llvm_mc_parser", "llvm_support"]),
        "%{LLVM_OBJECTYAML_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_object_yaml", "LLVMObjectYAML",
+            _llvm_get_library_rule(ctx, prx, "llvm_object_yaml",
+                "LLVMObjectYAML",
                 ["llvm_debug_info_codeview", "llvm_object", "llvm_support"]),
        "%{LLVM_OPTION_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_option", "LLVMOption",
-                ["llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_option",
+                "LLVMOption", ["llvm_support"]),
        "%{LLVM_ORCJIT_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_orc_jit", "LLVMOrcJIT",
-                ["llvm_core", "llvm_execution_engine", "llvm_jit_link", "llvm_mc",
-                 "llvm_object", "llvm_runtime_dy_ld", "llvm_support", "llvm_target",
-                 "llvm_transform_utils"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_orc_jit",
+                "LLVMOrcJIT",
+                ["llvm_core", "llvm_execution_engine", "llvm_jit_link",
+                 "llvm_mc", "llvm_object", "llvm_runtime_dy_ld",
+                 "llvm_support", "llvm_target", "llvm_transform_utils"]),
         "%{LLVM_PASSES_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_passes", "LLVMPasses",
-                ["llvm_aggressive_inst_combine", "llvm_analysis", "llvm_code_gen",
-                 "llvm_core", "llvm_inst_combine", "llvm_instrumentation",
-                 "llvm_scalar_opts", "llvm_support", "llvm_target", "llvm_transform_utils",
-                 "llvm_vectorize", "llvm_ipo"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_passes",
+                "LLVMPasses",
+                ["llvm_aggressive_inst_combine", "llvm_analysis",
+                 "llvm_code_gen", "llvm_core", "llvm_inst_combine",
+                 "llvm_instrumentation", "llvm_scalar_opts", "llvm_support",
+                 "llvm_target", "llvm_transform_utils", "llvm_vectorize",
+                 "llvm_ipo"]),
         "%{LLVM_PROFILEDATA_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_profile_data", "LLVMProfileData",
+            _llvm_get_library_rule(ctx, prx, "llvm_profile_data",
+                "LLVMProfileData",
                 ["llvm_core", "llvm_support"]),
         "%{LLVM_REMARKS_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_remarks", "LLVMRemarks",
+            _llvm_get_library_rule(ctx, prx, "llvm_remarks",
+                "LLVMRemarks",
                 ["llvm_support"]),
         "%{LLVM_RUNTIMEDYLD_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_runtime_dy_ld", "LLVMRuntimeDyld",
+            _llvm_get_library_rule(ctx, prx, "llvm_runtime_dy_ld",
+                "LLVMRuntimeDyld",
                 ["llvm_mc", "llvm_object", "llvm_support"]),
         "%{LLVM_SCALAROPTS_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_scalar_opts", "LLVMScalarOpts",
-                ["llvm_aggressive_inst_combine", "llvm_analysis", "llvm_core",
-                 "llvm_inst_combine", "llvm_support", "llvm_transform_utils"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_scalar_opts",
+                "LLVMScalarOpts",
+                ["llvm_aggressive_inst_combine", "llvm_analysis",
+                 "llvm_core", "llvm_inst_combine", "llvm_support",
+                 "llvm_transform_utils"]),
         "%{LLVM_SELECTIONDAG_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_selection_dag", "LLVMSelectionDAG",
-                ["llvm_analysis", "llvm_code_gen", "llvm_core", "llvm_mc", "llvm_support",
-                 "llvm_target", "llvm_transform_utils"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_selection_dag",
+                "LLVMSelectionDAG",
+                ["llvm_analysis", "llvm_code_gen", "llvm_core", "llvm_mc",
+                 "llvm_support", "llvm_target", "llvm_transform_utils"]),
         "%{LLVM_SUPPORT_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_support", "LLVMSupport",
+            _llvm_get_library_rule(ctx, prx, "llvm_support",
+                "LLVMSupport",
                 ["llvm_demangle"] + (["z3_solver"] if _enable_local_z3(ctx) else []),
                 _llvm_get_link_opts(ctx)),
         "%{LLVM_SYMBOLIZE_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_symbolize", "LLVMSymbolize",
-                ["llvm_debug_info_dwarf", "llvm_debug_info_pdb", "llvm_demangle",
-                 "llvm_object", "llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_symbolize",
+                "LLVMSymbolize",
+                ["llvm_debug_info_dwarf", "llvm_debug_info_pdb",
+                 "llvm_demangle", "llvm_object", "llvm_support"]),
         "%{LLVM_TABLEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_table_gen", "LLVMTableGen",
+            _llvm_get_library_rule(ctx, prx, "llvm_table_gen",
+                "LLVMTableGen",
                 ["llvm_support"]),
         "%{LLVM_TARGET_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_target", "LLVMTarget",
+            _llvm_get_library_rule(ctx, prx, "llvm_target",
+                "LLVMTarget",
                 ["llvm_analysis", "llvm_core", "llvm_mc", "llvm_support"]),
         "%{LLVM_TEXTAPI_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_text_api", "LLVMTextAPI",
+            _llvm_get_library_rule(ctx, prx, "llvm_text_api",
+                "LLVMTextAPI",
                 ["llvm_binary_format", "llvm_support"]),
         "%{LLVM_TRANSFORMUTILS_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_transform_utils", "LLVMTransformUtils",
+            _llvm_get_library_rule(ctx, prx, "llvm_transform_utils",
+                "LLVMTransformUtils",
                 ["llvm_analysis", "llvm_core", "llvm_support"]),
         "%{LLVM_VECTORIZE_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_vectorize", "LLVMVectorize",
-                ["llvm_analysis", "llvm_core", "llvm_support", "llvm_transform_utils"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_vectorize",
+                "LLVMVectorize",
+                ["llvm_analysis", "llvm_core", "llvm_support",
+                 "llvm_transform_utils"]),
         "%{LLVM_WINDOWS_MANIFEST_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_windows_manifest", "LLVMWindowsManifest",
+            _llvm_get_library_rule(ctx, prx, "llvm_windows_manifest",
+                "LLVMWindowsManifest",
                 ["llvm_support"]),
         "%{LLVM_XRAY_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_xray", "LLVMXRay",
+            _llvm_get_library_rule(ctx, prx, "llvm_xray",
+                "LLVMXRay",
                 ["llvm_object", "llvm_support"]),
         "%{LLVM_AARCH64_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_aarch64_asm_parser", "LLVMAArch64AsmParser",
+            _llvm_get_library_rule(ctx, prx, "llvm_aarch64_asm_parser",
+                "LLVMAArch64AsmParser",
                 ["llvm_aarch64_desc", "llvm_aarch64_info", "llvm_aarch64_utils",
                  "llvm_mc", "llvm_mc_parser", "llvm_support"]),
         "%{LLVM_AARCH64_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_aarch64_code_gen", "LLVMAArch64CodeGen",
+            _llvm_get_library_rule(ctx, prx, "llvm_aarch64_code_gen",
+                "LLVMAArch64CodeGen",
                 ["llvm_aarch64_desc", "llvm_aarch64_info", "llvm_aarch64_utils",
                  "llvm_analysis", "llvm_asm_printer", "llvm_code_gen", "llvm_core",
                  "llvm_global_isel", "llvm_mc", "llvm_scalar_opts",
                  "llvm_selection_dag", "llvm_support", "llvm_target",
                  "llvm_transform_utils"]),
          "%{LLVM_AARCH64_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_aarch64_desc", "LLVMAArch64Desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_aarch64_desc",
+                "LLVMAArch64Desc",
                 ["llvm_aarch64_info", "llvm_aarch64_utils", "llvm_mc",
                  "llvm_support"]),
         "%{LLVM_AARCH64_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_aarch64_disassembler", "LLVMAArch64Disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_aarch64_disassembler",
+                "LLVMAArch64Disassembler",
                 ["llvm_aarch64_desc", "llvm_aarch64_info", "llvm_aarch64_utils",
                  "llvm_mc", "llvm_mc_disassembler", "llvm_support"]),
          "%{LLVM_AARCH64_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_aarch64_info", "LLVMAArch64Info",
+            _llvm_get_library_rule(ctx, prx, "llvm_aarch64_info",
+                "LLVMAArch64Info",
                 ["llvm_support"]),
          "%{LLVM_AARCH64_UTILS_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_aarch64_utils", "LLVMAArch64Utils",
+            _llvm_get_library_rule(ctx, prx, "llvm_aarch64_utils",
+                "LLVMAArch64Utils",
                 ["llvm_support"]),
         "%{LLVM_AMDGPU_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_amdgpu_asm_parser", "LLVMAMDGPUAsmParser",
+            _llvm_get_library_rule(ctx, prx, "llvm_amdgpu_asm_parser",
+                "LLVMAMDGPUAsmParser",
                 ["llvm_amdgpu_desc", "llvm_amdgpu_info", "llvm_amdgpu_utils",
                  "llvm_mc", "llvm_mc_parser", "llvm_support"]),
         "%{LLVM_AMDGPU_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_amdgpu_code_gen", "LLVMAMDGPUCodeGen",
+            _llvm_get_library_rule(ctx, prx, "llvm_amdgpu_code_gen",
+                "LLVMAMDGPUCodeGen",
                 ["llvm_amdgpu_desc", "llvm_amdgpu_info", "llvm_amdgpu_utils",
                  "llvm_analysis", "llvm_asm_printer", "llvm_binary_format",
                  "llvm_code_gen", "llvm_core", "llvm_global_isel", "llvm_mc",
@@ -1206,70 +1382,85 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_support", "llvm_target", "llvm_transform_utils",
                  "llvm_vectorize", "llvm_ipo"]),
         "%{LLVM_AMDGPU_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_amdgpu_desc", "LLVMAMDGPUDesc",
+            _llvm_get_library_rule(ctx, prx, "llvm_amdgpu_desc",
+                "LLVMAMDGPUDesc",
                 ["llvm_amdgpu_info", "llvm_amdgpu_utils", "llvm_binary_format",
                  "llvm_core", "llvm_mc", "llvm_support"]),
         "%{LLVM_AMDGPU_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_amdgpu_disassembler", "LLVMAMDGPUDisassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_amdgpu_disassembler",
+                "LLVMAMDGPUDisassembler",
                 ["llvm_amdgpu_desc", "llvm_amdgpu_info", "llvm_amdgpu_utils",
                  "llvm_mc", "llvm_mc_disassembler", "llvm_support"]),
         "%{LLVM_AMDGPU_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_amdgpu_info", "LLVMAMDGPUInfo",
+            _llvm_get_library_rule(ctx, prx, "llvm_amdgpu_info",
+                "LLVMAMDGPUInfo",
                 ["llvm_support"]),
         "%{LLVM_AMDGPU_UTILS_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_amdgpu_utils", "LLVMAMDGPUUtils",
+            _llvm_get_library_rule(ctx, prx, "llvm_amdgpu_utils",
+                "LLVMAMDGPUUtils",
                 ["llvm_binary_format", "llvm_core", "llvm_mc", "llvm_support"]),
         "%{LLVM_ARM_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_arm_asm_parser", "LLVMARMAsmParser",
+            _llvm_get_library_rule(ctx, prx, "llvm_arm_asm_parser",
+                "LLVMARMAsmParser",
                 ["llvm_arm_desc", "llvm_arm_info", "llvm_arm_utils",
                  "llvm_mc", "llvm_mc_parser", "llvm_support"]),
         "%{LLVM_ARM_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_arm_code_gen", "LLVMARMCodeGen",
+            _llvm_get_library_rule(ctx, prx, "llvm_arm_code_gen",
+                "LLVMARMCodeGen",
                 ["llvm_arm_desc", "llvm_arm_info", "llvm_arm_utils",
                  "llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_global_isel", "llvm_mc",
                  "llvm_scalar_opts", "llvm_selection_dag",
                  "llvm_support", "llvm_target", "llvm_transform_utils"]),
         "%{LLVM_ARM_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_arm_desc", "LLVMARMDesc",
+            _llvm_get_library_rule(ctx, prx, "llvm_arm_desc",
+                "LLVMARMDesc",
                 ["llvm_arm_info", "llvm_arm_utils", "llvm_mc",
                  "llvm_mc_disassembler", "llvm_support"]),
         "%{LLVM_ARM_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_arm_disassembler", "LLVMARMDisassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_arm_disassembler",
+                "LLVMARMDisassembler",
                 ["llvm_arm_desc", "llvm_arm_info", "llvm_arm_utils",
                  "llvm_mc_disassembler", "llvm_support"]),
         "%{LLVM_ARM_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_arm_info", "LLVMARMInfo",
+            _llvm_get_library_rule(ctx, prx, "llvm_arm_info",
+                "LLVMARMInfo",
                 ["llvm_support"]),
         "%{LLVM_ARM_UTILS_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_arm_utils", "LLVMARMUtils",
+            _llvm_get_library_rule(ctx, prx, "llvm_arm_utils",
+                "LLVMARMUtils",
                 ["llvm_support"]),
         "%{LLVM_BPF_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_bpf_asm_parser", "LLVMBPFAsmParser",
+            _llvm_get_library_rule(ctx, prx, "llvm_bpf_asm_parser",
+                "LLVMBPFAsmParser",
                 ["llvm_bpf_desc", "llvm_bpf_info", "llvm_mc",
                  "llvm_mc_parser", "llvm_support"]),
         "%{LLVM_BPF_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_bpf_code_gen", "LLVMBPFCodeGen",
+            _llvm_get_library_rule(ctx, prx, "llvm_bpf_code_gen",
+                "LLVMBPFCodeGen",
                 ["llvm_asm_printer", "llvm_bpf_desc", "llvm_bpf_info",
                  "llvm_code_gen", "llvm_core", "llvm_mc",
                  "llvm_selection_dag", "llvm_support",
                  "llvm_target"]),
         "%{LLVM_BPF_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_bpf_desc", "LLVMBPFDesc",
+            _llvm_get_library_rule(ctx, prx, "llvm_bpf_desc",
+                "LLVMBPFDesc",
                 ["llvm_bpf_info", "llvm_mc", "llvm_support"]),
         "%{LLVM_BPF_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_bpf_disassembler", "LLVMBPFDisassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_bpf_disassembler",
+                "LLVMBPFDisassembler",
                 ["llvm_bpf_info", "llvm_mc_disassembler", "llvm_support"]),
         "%{LLVM_BPF_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_bpf_info", "LLVMBPFInfo",
+            _llvm_get_library_rule(ctx, prx, "llvm_bpf_info",
+                "LLVMBPFInfo",
                 ["llvm_support"]),
         "%{LLVM_HEXAGON_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_hexagon_asm_parser",
+            _llvm_get_library_rule(ctx, prx, "llvm_hexagon_asm_parser",
                 "LLVMHexagonAsmParser",
                 ["llvm_hexagon_desc", "llvm_hexagon_info",
                  "llvm_mc", "llvm_mc_parser", "llvm_support"]),
         "%{LLVM_HEXAGON_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_hexagon_code_gen",
+            _llvm_get_library_rule(ctx, prx, "llvm_hexagon_code_gen",
                 "LLVMHexagonCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_hexagon_asm_parser",
@@ -1278,90 +1469,95 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_support", "llvm_target", "llvm_transform_utils",
                  "llvm_ipo"]),
         "%{LLVM_HEXAGON_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_hexagon_desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_hexagon_desc",
                 "LLVMHexagonDesc",
                 ["llvm_hexagon_info", "llvm_mc", "llvm_support"]),
         "%{LLVM_HEXAGON_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_hexagon_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_hexagon_disassembler",
                 "LLVMHexagonDisassembler",
                 ["llvm_hexagon_desc", "llvm_hexagon_info",
                  "llvm_mc", "llvm_mc_disassembler", "llvm_support"]),
         "%{LLVM_HEXAGON_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_hexagon_info",
+            _llvm_get_library_rule(ctx, prx, "llvm_hexagon_info",
                 "LLVMHexagonInfo",
                 ["llvm_support"]),
         "%{LLVM_LANAI_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_lanai_asm_parser",
+            _llvm_get_library_rule(ctx, prx, "llvm_lanai_asm_parser",
                 "LLVMLanaiAsmParser",
                 ["llvm_lanai_desc", "llvm_lanai_info", "llvm_mc",
                  "llvm_mc_parser", "llvm_support"]),
         "%{LLVM_LANAI_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_lanai_code_gen",
+            _llvm_get_library_rule(ctx, prx, "llvm_lanai_code_gen",
                 "LLVMLanaiCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_lanai_asm_parser", "llvm_lanai_desc",
                  "llvm_lanai_info", "llvm_mc", "llvm_selection_dag",
                  "llvm_support", "llvm_target", "llvm_transform_utils"]),
         "%{LLVM_LANAI_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_lanai_desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_lanai_desc",
                 "LLVMLanaiDesc",
                 ["llvm_lanai_info", "llvm_mc", "llvm_mc_disassembler",
                  "llvm_support"]),
         "%{LLVM_LANAI_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_lanai_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_lanai_disassembler",
                 "LLVMLanaiDisassembler",
                 ["llvm_lanai_desc", "llvm_lanai_info", "llvm_mc",
                  "llvm_mc_disassembler", "llvm_support"]),
         "%{LLVM_LANAI_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_lanai_info",
+            _llvm_get_library_rule(ctx, prx, "llvm_lanai_info",
                 "LLVMLanaiInfo",
                 ["llvm_support"]),
         "%{LLVM_MIPS_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_mips_asm_parser", "LLVMMipsAsmParser",
+            _llvm_get_library_rule(ctx, prx, "llvm_mips_asm_parser",
+                "LLVMMipsAsmParser",
                 ["llvm_mc", "llvm_mc_parser", "llvm_mips_desc",
                  "llvm_mips_info", "llvm_support"]),
         "%{LLVM_MIPS_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_mips_code_gen", "LLVMMipsCodeGen",
+            _llvm_get_library_rule(ctx, prx, "llvm_mips_code_gen",
+                "LLVMMipsCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_global_isel", "llvm_mc",
                  "llvm_mips_desc", "llvm_mips_info",
                  "llvm_selection_dag", "llvm_support",
                  "llvm_target"]),
         "%{LLVM_MIPS_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_mips_desc", "LLVMMipsDesc",
+            _llvm_get_library_rule(ctx, prx, "llvm_mips_desc",
+                "LLVMMipsDesc",
                 ["llvm_mc", "llvm_mips_info", "llvm_support"]),
         "%{LLVM_MIPS_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_mips_disassembler", "LLVMMipsDisassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_mips_disassembler",
+                "LLVMMipsDisassembler",
                 ["llvm_mc_disassembler", "llvm_mips_info", "llvm_support"]),
         "%{LLVM_MIPS_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_mips_info", "LLVMMipsInfo",
+            _llvm_get_library_rule(ctx, prx, "llvm_mips_info",
+                "LLVMMipsInfo",
                 ["llvm_support"]),
         "%{LLVM_MSP430_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_msp430_asm_parser",
+            _llvm_get_library_rule(ctx, prx, "llvm_msp430_asm_parser",
                 "LLVMMSP430AsmParser",
                 ["llvm_mc", "llvm_mc_parser", "llvm_msp430_desc",
                  "llvm_msp430_info", "llvm_support"]),
         "%{LLVM_MSP430_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_msp430_code_gen",
+            _llvm_get_library_rule(ctx, prx, "llvm_msp430_code_gen",
                 "LLVMMSP430CodeGen",
                 ["llvm_asm_printer", "llvm_code_gen", "llvm_core",
                  "llvm_mc", "llvm_msp430_desc", "llvm_msp430_info",
                  "llvm_selection_dag", "llvm_support", "llvm_target"]),
         "%{LLVM_MSP430_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_msp430_desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_msp430_desc",
                 "LLVMMSP430Desc",
                 ["llvm_mc", "llvm_msp430_info", "llvm_support"]),
         "%{LLVM_MSP430_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_msp430_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_msp430_disassembler",
                 "LLVMMSP430Disassembler",
                 ["llvm_mc_disassembler", "llvm_msp430_info",
                 "llvm_support"]),
         "%{LLVM_MSP430_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_msp430_info",
+            _llvm_get_library_rule(ctx, prx, "llvm_msp430_info",
                 "LLVMMSP430Info",
                 ["llvm_support"]),
         "%{LLVM_NVPTX_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_nvptx_code_gen",
+            _llvm_get_library_rule(ctx, prx, "llvm_nvptx_code_gen",
                 "LLVMNVPTXCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_mc", "llvm_nvptx_desc",
@@ -1369,111 +1565,120 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_support", "llvm_target", "llvm_transform_utils",
                  "llvm_vectorize", "llvm_ipo"]),
         "%{LLVM_NVPTX_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_nvptx_desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_nvptx_desc",
                 "LLVMNVPTXDesc",
                 ["llvm_mc", "llvm_nvptx_info", "llvm_support"]),
         "%{LLVM_NVPTX_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_nvptx_info",
+            _llvm_get_library_rule(ctx, prx, "llvm_nvptx_info",
                 "LLVMNVPTXInfo",
                 ["llvm_support"]),
         "%{LLVM_POWERPC_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_powerpc_asm_parser",
+            _llvm_get_library_rule(ctx, prx, "llvm_powerpc_asm_parser",
                 "LLVMPowerPCAsmParser",
                 ["llvm_mc", "llvm_mc_parser", "llvm_powerpc_desc",
                  "llvm_powerpc_info", "llvm_support"]),
         "%{LLVM_POWERPC_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_powerpc_code_gen",
+            _llvm_get_library_rule(ctx, prx, "llvm_powerpc_code_gen",
                 "LLVMPowerPCCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_mc", "llvm_powerpc_desc",
                  "llvm_powerpc_info", "llvm_scalar_opts", "llvm_selection_dag",
                  "llvm_support", "llvm_target", "llvm_transform_utils"]),
         "%{LLVM_POWERPC_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_powerpc_desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_powerpc_desc",
                 "LLVMPowerPCDesc",
                 ["llvm_mc", "llvm_powerpc_info", "llvm_support"]),
         "%{LLVM_POWERPC_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_powerpc_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_powerpc_disassembler",
                 "LLVMPowerPCDisassembler",
                 ["llvm_mc_disassembler", "llvm_powerpc_info", "llvm_support"]),
         "%{LLVM_POWERPC_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_powerpc_info",
+            _llvm_get_library_rule(ctx, prx, "llvm_powerpc_info",
                 "LLVMPowerPCInfo",
                 ["llvm_support"]),
         "%{LLVM_RISCV_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_riscv_asm_parser", "LLVMRISCVAsmParser",
+            _llvm_get_library_rule(ctx, prx, "llvm_riscv_asm_parser",
+                "LLVMRISCVAsmParser",
                 ["llvm_mc", "llvm_mc_parser", "llvm_riscv_desc", "llvm_riscv_info",
                  "llvm_riscv_utils", "llvm_support"]),
         "%{LLVM_RISCV_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_riscv_code_gen", "LLVMRISCVCodeGen",
+            _llvm_get_library_rule(ctx, prx, "llvm_riscv_code_gen",
+                "LLVMRISCVCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen", "llvm_core",
                  "llvm_global_isel", "llvm_mc", "llvm_riscv_desc", "llvm_riscv_info",
                  "llvm_riscv_utils", "llvm_selection_dag", "llvm_support",
                  "llvm_target"]),
         "%{LLVM_RISCV_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_riscv_desc", "LLVMRISCVDesc",
+            _llvm_get_library_rule(ctx, prx, "llvm_riscv_desc",
+                "LLVMRISCVDesc",
                 ["llvm_mc", "llvm_riscv_info", "llvm_riscv_utils", "llvm_support"]),
         "%{LLVM_RISCV_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_riscv_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_riscv_disassembler",
                 "LLVMRISCVDisassembler",
                 ["llvm_mc_disassembler", "llvm_riscv_info", "llvm_support"]),
         "%{LLVM_RISCV_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_riscv_info", "LLVMRISCVInfo",
+            _llvm_get_library_rule(ctx, prx, "llvm_riscv_info",
+                "LLVMRISCVInfo",
                 ["llvm_support"]),
         "%{LLVM_RISCV_UTILS_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_riscv_utils", "LLVMRISCVUtils",
+            _llvm_get_library_rule(ctx, prx, "llvm_riscv_utils",
+                "LLVMRISCVUtils",
                 ["llvm_support"]),
         "%{LLVM_SPARC_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_sparc_asm_parser", "LLVMSparcAsmParser",
-                ["llvm_mc", "llvm_mc_parser", "llvm_sparc_desc", "llvm_sparc_info",
-                 "llvm_support"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_sparc_asm_parser",
+                "LLVMSparcAsmParser",
+                ["llvm_mc", "llvm_mc_parser", "llvm_sparc_desc",
+                 "llvm_sparc_info", "llvm_support"]),
         "%{LLVM_SPARC_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_sparc_code_gen", "LLVMSparcCodeGen",
+            _llvm_get_library_rule(ctx, prx, "llvm_sparc_code_gen",
+                "LLVMSparcCodeGen",
                 ["llvm_asm_printer", "llvm_code_gen", "llvm_core", "llvm_mc",
                  "llvm_selection_dag", "llvm_sparc_desc", "llvm_sparc_info",
                  "llvm_support", "llvm_target"]),
         "%{LLVM_SPARC_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_sparc_desc", "LLVMSparcDesc",
+            _llvm_get_library_rule(ctx, prx, "llvm_sparc_desc",
+                "LLVMSparcDesc",
                 ["llvm_mc", "llvm_sparc_info", "llvm_support"]),
         "%{LLVM_SPARC_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_sparc_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_sparc_disassembler",
                 "LLVMSparcDisassembler",
                 ["llvm_mc_disassembler", "llvm_sparc_info", "llvm_support"]),
         "%{LLVM_SPARC_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_sparc_info", "LLVMSparcInfo",
+            _llvm_get_library_rule(ctx, prx, "llvm_sparc_info",
+                "LLVMSparcInfo",
                 ["llvm_support"]),
         "%{LLVM_SYSTEMZ_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_systemz_asm_parser",
+            _llvm_get_library_rule(ctx, prx, "llvm_systemz_asm_parser",
                 "LLVMSystemZAsmParser",
                 ["llvm_mc", "llvm_mc_parser", "llvm_support",
                  "llvm_systemz_desc", "llvm_systemz_info"]),
         "%{LLVM_SYSTEMZ_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_systemz_code_gen",
+            _llvm_get_library_rule(ctx, prx, "llvm_systemz_code_gen",
                 "LLVMSystemZCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_mc", "llvm_scalar_opts",
                  "llvm_selection_dag", "llvm_support", "llvm_systemz_desc",
                  "llvm_systemz_info", "llvm_target"]),
         "%{LLVM_SYSTEMZ_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_systemz_desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_systemz_desc",
                 "LLVMSystemZDesc",
                 ["llvm_mc", "llvm_support", "llvm_systemz_info"]),
         "%{LLVM_SYSTEMZ_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_systemz_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_systemz_disassembler",
                 "LLVMSystemZDisassembler",
                 ["llvm_mc", "llvm_mc_disassembler", "llvm_support",
                  "llvm_systemz_desc", "llvm_systemz_info"]),
         "%{LLVM_SYSTEMZ_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_systemz_info",
+            _llvm_get_library_rule(ctx, prx, "llvm_systemz_info",
                 "LLVMSystemZInfo",
                 ["llvm_support"]),
         "%{LLVM_WEBASSEMBLY_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_webassembly_asm_parser",
+            _llvm_get_library_rule(ctx, prx, "llvm_webassembly_asm_parser",
                 "LLVMWebAssemblyAsmParser",
                 ["llvm_mc", "llvm_mc_parser", "llvm_support",
                  "llvm_webassembly_info"]),
         "%{LLVM_WEBASSEMBLY_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_webassembly_code_gen",
+            _llvm_get_library_rule(ctx, prx, "llvm_webassembly_code_gen",
                 "LLVMWebAssemblyCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_binary_format",
                  "llvm_code_gen", "llvm_core", "llvm_mc", "llvm_scalar_opts",
@@ -1481,65 +1686,75 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_transform_utils", "llvm_webassembly_desc",
                  "llvm_webassembly_info"]),
         "%{LLVM_WEBASSEMBLY_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_webassembly_desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_webassembly_desc",
                 "LLVMWebAssemblyDesc",
                 ["llvm_mc", "llvm_support", "llvm_webassembly_info"]),
         "%{LLVM_WEBASSEMBLY_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_webassembly_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_webassembly_disassembler",
                 "LLVMWebAssemblyDisassembler",
                 ["llvm_mc_disassembler", "llvm_support",
                  "llvm_webassembly_desc", "llvm_webassembly_info"]),
         "%{LLVM_WEBASSEMBLY_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_webassembly_info",
+            _llvm_get_library_rule(ctx, prx, "llvm_webassembly_info",
                 "LLVMWebAssemblyInfo",
                 ["llvm_support"]),
         "%{LLVM_X86_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_x86_asm_parser", "LLVMX86AsmParser",
+            _llvm_get_library_rule(ctx, prx, "llvm_x86_asm_parser",
+                "LLVMX86AsmParser",
                 ["llvm_mc", "llvm_mc_parser", "llvm_support", "llvm_x86_desc",
                  "llvm_x86_info"]),
         "%{LLVM_X86_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_x86_code_gen", "LLVMX86CodeGen",
-                ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen", "llvm_core",
-                 "llvm_global_isel", "llvm_mc", "llvm_profile_data", "llvm_selection_dag",
-                 "llvm_support", "llvm_target", "llvm_x86_desc", "llvm_x86_info",
-                 "llvm_x86_utils"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_x86_code_gen",
+                "LLVMX86CodeGen",
+                ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
+                 "llvm_core", "llvm_global_isel", "llvm_mc", "llvm_profile_data",
+                 "llvm_selection_dag", "llvm_support", "llvm_target",
+                 "llvm_x86_desc", "llvm_x86_info", "llvm_x86_utils"]),
         "%{LLVM_X86_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_x86_desc", "LLVMX86Desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_x86_desc",
+                "LLVMX86Desc",
                 ["llvm_mc", "llvm_mc_disassembler", "llvm_object", "llvm_support",
                  "llvm_x86_info", "llvm_x86_utils"]),
         "%{LLVM_X86_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_x86_disassembler", "LLVMX86Disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_x86_disassembler",
+                "LLVMX86Disassembler",
                 ["llvm_mc_disassembler", "llvm_support", "llvm_x86_info"]),
         "%{LLVM_X86_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_x86_info", "LLVMX86Info",
+            _llvm_get_library_rule(ctx, prx, "llvm_x86_info",
+                "LLVMX86Info",
                 ["llvm_support"]),
         "%{LLVM_X86_UTILS_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_x86_utils", "LLVMX86Utils",
+            _llvm_get_library_rule(ctx, prx, "llvm_x86_utils",
+                "LLVMX86Utils",
                 ["llvm_support"]),
         "%{LLVM_XCORE_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_xcore_code_gen", "LLVMXCoreCodeGen",
-                ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen", "llvm_core",
-                 "llvm_mc", "llvm_selection_dag", "llvm_support", "llvm_target",
-                 "llvm_transform_utils", "llvm_xcore_desc", "llvm_xcore_info"]),
+            _llvm_get_library_rule(ctx, prx, "llvm_xcore_code_gen",
+                "LLVMXCoreCodeGen",
+                ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
+                 "llvm_core", "llvm_mc", "llvm_selection_dag", "llvm_support",
+                 "llvm_target", "llvm_transform_utils", "llvm_xcore_desc",
+                 "llvm_xcore_info"]),
         "%{LLVM_XCORE_DESC_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_xcore_desc", "LLVMXCoreDesc",
+            _llvm_get_library_rule(ctx, prx, "llvm_xcore_desc",
+                "LLVMXCoreDesc",
                 ["llvm_mc", "llvm_support", "llvm_xcore_info"]),
         "%{LLVM_XCORE_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_xcore_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_xcore_disassembler",
                 "LLVMXCoreDisassembler",
                 ["llvm_mc_disassembler", "llvm_support", "llvm_xcore_info"]),
         "%{LLVM_XCORE_INFO_LIB}":
-            _llvm_get_library_rule(ctx, "llvm_xcore_info", "LLVMXCoreInfo",
+            _llvm_get_library_rule(ctx, prx, "llvm_xcore_info",
+                "LLVMXCoreInfo",
                 ["llvm_support"]),
         "%{LLVM_CONFIG_GENRULE}":
-            _llvm_get_config_genrule(ctx, "llvm_config_files", "generated/include",
-                "llvm_config.h"),
+            _llvm_get_config_genrule(ctx, prx, "llvm_config_files",
+                "generated/include", "llvm_config.h"),
         "%{LLVM_CONFIG_LIB}":
-            _llvm_get_config_library_rule(ctx, "llvm_config_headers", "llvm_config_files",
-                "generated/include"),
+            _llvm_get_config_library_rule(ctx, prx, "llvm_config_headers",
+                "llvm_config_files", "generated/include"),
         "%{Z3_SOLVER_LIB}":
-            _llvm_get_library_rule(ctx, "z3_solver", "libz3", ignore_prefix = True,
-                directory = "z3/lib"),
+            _llvm_get_library_rule(ctx, prx, "z3_solver", "libz3",
+                ignore_prefix = True, directory = "z3/lib"),
     })
 
     _tpl(repository_ctx, "llvm_config.bzl", {
@@ -1549,6 +1764,10 @@ def _llvm_installed_impl(repository_ctx):
 
 llvm_configure = repository_rule(
     implementation = _llvm_installed_impl,
+    attrs = {
+        "llvm_prefix": attr.string(default = "llvm_"),
+        "clang_prefix": attr.string(default = "clang_"),
+    },
     environ = [
         _LLVM_INSTALL_PREFIX,
         _Z3_INSTALL_PREFIX,

@@ -13,6 +13,8 @@ load("@bazel_llvm_bridge//llvm:llvm_configure.bzl", "llvm_configure")
 
 llvm_configure(
     name = "local_llvm",
+    llvm_prefix = "", # default value: llvm_
+    clang_prefix = "cl_", # default value: clang_
     # The LLVM_INSTALL_PREFIX environment variable must point to
     # a local llvm/clang installation.
     # The Z3_INSTALL_PREFIX environment variable must point to
