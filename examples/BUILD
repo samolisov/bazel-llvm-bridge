@@ -51,8 +51,8 @@ cc_binary(
     ],
     copts = llvm_copts(),
     deps = [
-        "@local_llvm//:llvm_headers",
-        "@local_llvm//:llvm_bit_reader",
+        "@local_llvm//:headers",
+        "@local_llvm//:bit_reader",
     ],
     visibility = ["//visibility:private"],
 )
@@ -64,8 +64,8 @@ cc_library(
     ],
     copts = llvm_copts(),
     deps = [
-        "@local_llvm//:llvm_headers",
-        "@local_llvm//:llvm_core",
+        "@local_llvm//:headers",
+        "@local_llvm//:core",
     ],
     alwayslink = 1, # this is required to get a link error when
                     # a dependency has been missed
@@ -105,76 +105,76 @@ cc_binary(
         + if_has_x86(["LLVM_SUPPORTS_TARGET_X86"])
         + if_has_xcore(["LLVM_SUPPORTS_TARGET_XCORE"]),
     deps = if_has_aarch64([
-        "@local_llvm//:llvm_aarch64_asm_parser",
-        "@local_llvm//:llvm_aarch64_asm_printer",
-        "@local_llvm//:llvm_aarch64_code_gen",
-        "@local_llvm//:llvm_aarch64_disassembler",
+        "@local_llvm//:aarch64_asm_parser",
+        "@local_llvm//:aarch64_asm_printer",
+        "@local_llvm//:aarch64_code_gen",
+        "@local_llvm//:aarch64_disassembler",
     ]) + if_has_amdgpu([
-        "@local_llvm//:llvm_amdgpu_asm_parser",
-        "@local_llvm//:llvm_amdgpu_asm_printer",
-        "@local_llvm//:llvm_amdgpu_code_gen",
-        "@local_llvm//:llvm_amdgpu_disassembler",
+        "@local_llvm//:amdgpu_asm_parser",
+        "@local_llvm//:amdgpu_asm_printer",
+        "@local_llvm//:amdgpu_code_gen",
+        "@local_llvm//:amdgpu_disassembler",
     ]) + if_has_arm([
-        "@local_llvm//:llvm_arm_asm_parser",
-        "@local_llvm//:llvm_arm_asm_printer",
-        "@local_llvm//:llvm_arm_code_gen",
-        "@local_llvm//:llvm_arm_disassembler",
+        "@local_llvm//:arm_asm_parser",
+        "@local_llvm//:arm_asm_printer",
+        "@local_llvm//:arm_code_gen",
+        "@local_llvm//:arm_disassembler",
     ]) + if_has_bpf([
-        "@local_llvm//:llvm_bpf_asm_parser",
-        "@local_llvm//:llvm_bpf_asm_printer",
-        "@local_llvm//:llvm_bpf_code_gen",
-        "@local_llvm//:llvm_bpf_disassembler",
+        "@local_llvm//:bpf_asm_parser",
+        "@local_llvm//:bpf_asm_printer",
+        "@local_llvm//:bpf_code_gen",
+        "@local_llvm//:bpf_disassembler",
     ]) + if_has_hexagon([
-        "@local_llvm//:llvm_hexagon_asm_parser",
-        "@local_llvm//:llvm_hexagon_code_gen",
-        "@local_llvm//:llvm_hexagon_disassembler",
+        "@local_llvm//:hexagon_asm_parser",
+        "@local_llvm//:hexagon_code_gen",
+        "@local_llvm//:hexagon_disassembler",
     ]) + if_has_lanai([
-        "@local_llvm//:llvm_lanai_asm_parser",
-        "@local_llvm//:llvm_lanai_asm_printer",
-        "@local_llvm//:llvm_lanai_code_gen",
-        "@local_llvm//:llvm_lanai_disassembler",
+        "@local_llvm//:lanai_asm_parser",
+        "@local_llvm//:lanai_asm_printer",
+        "@local_llvm//:lanai_code_gen",
+        "@local_llvm//:lanai_disassembler",
     ]) + if_has_mips([
-        "@local_llvm//:llvm_mips_asm_parser",
-        "@local_llvm//:llvm_mips_asm_printer",
-        "@local_llvm//:llvm_mips_code_gen",
-        "@local_llvm//:llvm_mips_disassembler",
+        "@local_llvm//:mips_asm_parser",
+        "@local_llvm//:mips_asm_printer",
+        "@local_llvm//:mips_code_gen",
+        "@local_llvm//:mips_disassembler",
     ]) + if_has_msp430([
-        "@local_llvm//:llvm_msp430_asm_parser",
-        "@local_llvm//:llvm_msp430_asm_printer",
-        "@local_llvm//:llvm_msp430_code_gen",
-        "@local_llvm//:llvm_msp430_disassembler",
+        "@local_llvm//:msp430_asm_parser",
+        "@local_llvm//:msp430_asm_printer",
+        "@local_llvm//:msp430_code_gen",
+        "@local_llvm//:msp430_disassembler",
     ]) + if_has_nvptx([
-        "@local_llvm//:llvm_nvptx_asm_printer",
-        "@local_llvm//:llvm_nvptx_code_gen",
+        "@local_llvm//:nvptx_asm_printer",
+        "@local_llvm//:nvptx_code_gen",
     ]) + if_has_powerpc([
-        "@local_llvm//:llvm_powerpc_asm_parser",
-        "@local_llvm//:llvm_powerpc_asm_printer",
-        "@local_llvm//:llvm_powerpc_code_gen",
-        "@local_llvm//:llvm_powerpc_disassembler",
+        "@local_llvm//:powerpc_asm_parser",
+        "@local_llvm//:powerpc_asm_printer",
+        "@local_llvm//:powerpc_code_gen",
+        "@local_llvm//:powerpc_disassembler",
     ]) + if_has_sparc([
-        "@local_llvm//:llvm_sparc_asm_parser",
-        "@local_llvm//:llvm_sparc_asm_printer",
-        "@local_llvm//:llvm_sparc_code_gen",
-        "@local_llvm//:llvm_sparc_disassembler",
+        "@local_llvm//:sparc_asm_parser",
+        "@local_llvm//:sparc_asm_printer",
+        "@local_llvm//:sparc_code_gen",
+        "@local_llvm//:sparc_disassembler",
     ]) + if_has_systemz([
-        "@local_llvm//:llvm_systemz_asm_parser",
-        "@local_llvm//:llvm_systemz_asm_printer",
-        "@local_llvm//:llvm_systemz_code_gen",
-        "@local_llvm//:llvm_systemz_disassembler",
+        "@local_llvm//:systemz_asm_parser",
+        "@local_llvm//:systemz_asm_printer",
+        "@local_llvm//:systemz_code_gen",
+        "@local_llvm//:systemz_disassembler",
     ]) + if_has_webassembly([
-        "@local_llvm//:llvm_webassembly_asm_parser",
-        "@local_llvm//:llvm_webassembly_asm_printer",
-        "@local_llvm//:llvm_webassembly_code_gen",
-        "@local_llvm//:llvm_webassembly_disassembler",
+        "@local_llvm//:webassembly_asm_parser",
+        "@local_llvm//:webassembly_asm_printer",
+        "@local_llvm//:webassembly_code_gen",
+        "@local_llvm//:webassembly_disassembler",
     ]) + if_has_x86([
-        "@local_llvm//:llvm_x86_asm_parser",
-        "@local_llvm//:llvm_x86_asm_printer",
-        "@local_llvm//:llvm_x86_code_gen",
-        "@local_llvm//:llvm_x86_disassembler",
+        "@local_llvm//:x86_asm_parser",
+        "@local_llvm//:x86_asm_printer",
+        "@local_llvm//:x86_code_gen",
+        "@local_llvm//:x86_disassembler",
     ]) + if_has_xcore([
-        "@local_llvm//:llvm_xcore_asm_printer",
-        "@local_llvm//:llvm_xcore_code_gen",
-        "@local_llvm//:llvm_xcore_disassembler",
+        "@local_llvm//:xcore_asm_printer",
+        "@local_llvm//:xcore_code_gen",
+        "@local_llvm//:xcore_disassembler",
     ])
 )
 
@@ -197,11 +197,11 @@ cc_binary(
         "//conditions:default": [],
     }),
     deps = [
-        "@local_llvm//:clang_headers",
-        "@local_llvm//:clang_libclang",
-        "@local_llvm//:llvm_config_headers",
-        "@local_llvm//:llvm_headers",
-        "@local_llvm//:llvm_support",
+        "@local_llvm//:cl_headers",
+        "@local_llvm//:cl_libclang",
+        "@local_llvm//:config_headers",
+        "@local_llvm//:headers",
+        "@local_llvm//:support",
     ],
     linkopts = select({
         ":linux_x86_64": [
@@ -220,13 +220,13 @@ cc_binary(
 genrule(
     name = "copy_local_llvm_shared_lin",
     srcs = [
-        "@local_llvm//:clang_copy_libclang",
+        "@local_llvm//:cl_copy_libclang",
     ],
     outs = [
         "libclang.so.8",
     ],
     cmd = """
-        cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)/libclang.so.8
+        cp -f $(location @local_llvm//:cl_copy_libclang) $(@D)/libclang.so.8
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
@@ -235,13 +235,13 @@ genrule(
 genrule(
     name = "copy_local_llvm_shared_mac",
     srcs = [
-        "@local_llvm//:clang_copy_libclang",
+        "@local_llvm//:cl_copy_libclang",
     ],
     outs = [
         "libclang.dylib",
     ],
     cmd = """
-        cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)
+        cp -f $(location @local_llvm//:cl_copy_libclang) $(@D)
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
@@ -250,13 +250,13 @@ genrule(
 genrule(
     name = "copy_local_llvm_shared_win",
     srcs = [
-        "@local_llvm//:clang_copy_libclang",
+        "@local_llvm//:cl_copy_libclang",
     ],
     outs = [
         "libclang.dll",
     ],
     cmd = """
-        cp -f $(location @local_llvm//:clang_copy_libclang) $(@D)
+        cp -f $(location @local_llvm//:cl_copy_libclang) $(@D)
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
