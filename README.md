@@ -17,11 +17,11 @@ This project provides a bridge that let you use static libraries from a local in
 of LLVM in your projects when Bazel is used for building. Each library from LLVM/Clang
 (including the special 'headers' library that provides LLVM's and Clang's headers)
 is available as a `@local_llvm//:llvm_<library_name>` dependency (`@local_llvm//:llvm_headers`
-for the headers library, `clang` as the prefix for Clang's libraries), where `@local_llvm`
-is the name of the used `llvm_configure`
+for the headers library), where `@local_llvm` is the name of the used `llvm_configure`
 [repository rule](https://docs.bazel.build/versions/master/skylark/repository_rules.html)
-and can be edited in your `WORKSPACE`. Notice that a library will bring also its dependencies
-exactly how the CMake build works.
+while `llvm_` and `clang_` are the default prefixes for LLVM and Clang specific rules,
+all these parameters can be configured in your `WORKSPACE`. Notice that a library will
+bring also its dependencies exactly how the CMake build works.
 
 When LLVM/Clang is built on an environment that supports the
 [*Z3 Solver*](https://github.com/Z3Prover/z3), the code of some LLVM and Clang libraries
@@ -55,10 +55,15 @@ http_archive(
 
 load("@bazel_llvm_bridge//llvm:llvm_configure.bzl", "llvm_configure")
 
-llvm_configure(name = "local_llvm")
+llvm_configure(
+    name = "local_llvm",
+    llvm_prefix = "llvm_",
+    clang_prefix = "clang_",
+)
 ```
 
-Where `name` is whatever you want.
+Where `name` is whatever you want, default values for `llvm_prefix` and `clang_prefix`
+may be omitted.
 
 A version number is matched to the version of LLVM and can be found in the `release/<version>-<build>`
 tag or `release/<version>.x` branch. For example:
