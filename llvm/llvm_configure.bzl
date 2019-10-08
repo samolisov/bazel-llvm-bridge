@@ -7,6 +7,8 @@
    https://github.com/tensorflow/ngraph-bridge/blob/master/bazel/tf_configure/tf_configure.bzl
 """
 
+_LLVM_LICENSE_FILE_PATH = "https://raw.githubusercontent.com/llvm/llvm-project/master/llvm/LICENSE.TXT"
+_LLVM_LICENSE_FILE_SHA256 = "8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee"
 _LLVM_INSTALL_PREFIX = "LLVM_INSTALL_PREFIX"
 _Z3_INSTALL_PREFIX = "Z3_INSTALL_PREFIX"
 
@@ -798,6 +800,10 @@ def _llvm_installed_impl(repository_ctx):
     llvm_path = _llvm_get_install_path(repository_ctx)
     repository_ctx.symlink("%s/include" % llvm_path, "include")
     repository_ctx.symlink("%s/lib" % llvm_path, "lib")
+    repository_ctx.download(
+        url = _LLVM_LICENSE_FILE_PATH,
+        output = "./LICENSE.TXT",
+        sha256 = _LLVM_LICENSE_FILE_SHA256)
     if _enable_local_z3(repository_ctx):
         z3_path = repository_ctx.os.environ[_Z3_INSTALL_PREFIX]
         _z3_get_libraries(repository_ctx, z3_path)
