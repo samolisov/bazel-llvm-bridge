@@ -694,6 +694,30 @@ def _llvm_get_formatted_target_list(repository_ctx, targets):
 
     return "\n".join(fmt_targets)
 
+def _llvm_get_install_path(repository_ctx):
+    """Returns a path to a local LLVM installation passed in
+       the '_LLVM_INSTALL_PREFIX' environment variable.
+       Fails if the variable is not defined or the path
+       doesn't exist.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+    Returns:
+        A path to a local LLVM installation if the path exists otherwise fails.
+    """
+    if not _LLVM_INSTALL_PREFIX in repository_ctx.os.environ:
+        _fail("\n".join([
+            "The path to a local LLVM installation must be assigned to",
+            "the '%s' environment variable." % _LLVM_INSTALL_PREFIX
+        ]))
+    llvm_install_path = repository_ctx.os.environ[_LLVM_INSTALL_PREFIX]
+    if not repository_ctx.path(llvm_install_path).exists:
+        _fail("\n".join([
+            "The path to a local LLVM installation",
+            "'%s' is not found." % llvm_install_path
+        ]))
+    return llvm_install_path
+
 def _enable_local_z3(repository_ctx):
     """Returns whether the Z3 Solver is enabled. The solver is
        enabled if the _Z3_INSTALL_PREFIX environment variable
@@ -771,7 +795,7 @@ def _llvm_installed_impl(repository_ctx):
     }
     # if there are duplicated prefixes, fail.
     _llvm_check_duplicated_prefixes(prefix_dictionary)
-    llvm_path = repository_ctx.os.environ[_LLVM_INSTALL_PREFIX]
+    llvm_path = _llvm_get_install_path(repository_ctx)
     repository_ctx.symlink("%s/include" % llvm_path, "include")
     repository_ctx.symlink("%s/lib" % llvm_path, "lib")
     if _enable_local_z3(repository_ctx):
