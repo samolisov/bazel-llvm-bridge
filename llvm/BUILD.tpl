@@ -1,5 +1,7 @@
 package(default_visibility = ["//visibility:public"])
 
+exports_files(["LICENSE.TXT"])
+
 %{CLANG_HEADERS_LIB}
 %{CLANG_ANALYSIS_LIB}
 %{CLANG_ARCMIGRATE_LIB}
