@@ -430,6 +430,7 @@ def _llvm_get_shared_library_rule(
         prefix_dict,
         name,
         llvm_library_file,
+        deps = [],
         ignore_prefix = False,
         nix_only = False,
         win_only = False):
@@ -441,6 +442,7 @@ def _llvm_get_shared_library_rule(
         prefix_dict: the dictionary of library name prefixes.
         name: rule name.
         llvm_library_file: an LLVM library file name without extension.
+        deps: names of cc_library targets this one depends on.
         ignore_prefix: if True, no lib prefix must be added on any host OS.
         nix_only: the library is available only on *nix systems.
         win_only: the library is available only on Windows.):
@@ -460,6 +462,7 @@ def _llvm_get_shared_library_rule(
         llvm_library_rule = _cc_library(
             name = _llvm_get_rule_name(prefix_dict, name),
             srcs = [library_file],
+            deps = _llvm_get_rule_names(prefix_dict, deps),
             )
     else:
         llvm_library_rule = "# file '%s' is not found.\n" % library_file
@@ -859,6 +862,7 @@ def _llvm_installed_impl(repository_ctx):
     supported_targets = _llvm_get_target_list(repository_ctx)
     ctx = repository_ctx
     prx = prefix_dictionary
+    add_hdrs = repository_ctx.attr.add_headers_to_deps
     _tpl(repository_ctx, "BUILD", {
         "%{CLANG_HEADERS_LIB}":
              _llvm_get_include_rule(ctx, prx, "clang_headers",
@@ -871,26 +875,31 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "clang_analysis",
                 "clangAnalysis",
                 ["clang_ast", "clang_ast_matchers", "clang_basic",
-                 "clang_lex", "llvm_support"]),
+                 "clang_lex", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_ARCMIGRATE_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_arc_migrate",
                 "clangARCMigrate",
                 ["clang_ast", "clang_analysis", "clang_basic", "clang_edit",
                  "clang_frontend", "clang_lex", "clang_rewrite", "clang_sema",
-                 "clang_serialization", "llvm_support"]),
+                 "clang_serialization", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_AST_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_ast",
                 "clangAST",
                 ["clang_basic", "clang_lex", "llvm_binary_format", "llvm_core",
-                 "llvm_support"]),
+                 "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_ASTMATCHERS_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_ast_matchers",
                 "clangASTMatchers",
-                ["clang_ast", "clang_basic", "llvm_support"]),
+                ["clang_ast", "clang_basic", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_BASIC_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_basic",
                 "clangBasic",
-                ["llvm_core", "llvm_mc", "llvm_support"]),
+                ["llvm_core", "llvm_mc", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_CODEGEN_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_code_gen",
                 "clangCodeGen",
@@ -904,56 +913,66 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_mc", "llvm_objc_arc", "llvm_object",
                  "llvm_passes", "llvm_profile_data", "llvm_remarks",
                  "llvm_scalar", "llvm_support", "llvm_target",
-                 "llvm_transform_utils"]),
+                 "llvm_transform_utils"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_CROSSTU_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_cross_tu",
                 "clangCrossTU",
                 ["clang_ast", "clang_basic", "clang_frontend", "clang_index",
-                 "llvm_support"]),
+                 "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_DEPENDENCYSCANNING_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_dependency_scanning",
                 "clangDependencyScanning",
                 ["clang_ast", "clang_basic", "clang_driver", "clang_frontend",
                  "clang_frontend_tool", "clang_lex", "clang_parse",
                  "clang_serialization", "clang_tooling",
-                 "llvm_core", "llvm_support"]),
+                 "llvm_core", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_DIRECTORYWATCHER_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_directory_watcher",
                 "clangDirectoryWatcher",
-                ["llvm_support"]),
+                ["llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_DRIVER_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_driver",
                 "clangDriver",
                 ["clang_basic", "llvm_binary_format", "llvm_option",
-                 "llvm_support"],
+                 "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else []),
                 ["-DEFAULTLIB:version.lib"] if _is_windows(ctx) else []),
         "%{CLANG_DYNAMICASTMATCHERS_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_dynamic_ast_matchers",
                 "clangDynamicASTMatchers",
                 ["clang_ast", "clang_ast_matchers", "clang_basic",
-                 "llvm_support"]),
+                 "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_EDIT_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_edit",
                 "clangEdit",
-                ["clang_ast", "clang_basic", "clang_lex", "llvm_support"]),
+                ["clang_ast", "clang_basic", "clang_lex", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_FORMAT_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_format",
                 "clangFormat",
                 ["clang_basic", "clang_lex", "clang_tooling_core",
-                 "clang_tooling_inclusions", "llvm_support"]),
+                 "clang_tooling_inclusions", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_FRONTEND_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_frontend",
                 "clangFrontend",
                 ["clang_ast", "clang_basic", "clang_driver", "clang_edit",
                  "clang_lex", "clang_parse", "clang_sema", "clang_serialization",
                  "llvm_bit_reader", "llvm_bitstream_reader", "llvm_option",
-                 "llvm_profile_data", "llvm_support"]),
+                 "llvm_profile_data", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_FRONTENDTOOL_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_frontend_tool",
                 "clangFrontendTool",
                 ["clang_basic", "clang_code_gen", "clang_driver", "clang_frontend",
                  "clang_rewrite_frontend", "clang_arc_migrate",
-                 "clang_static_analyzer_frontend", "llvm_option", "llvm_support"]),
+                 "clang_static_analyzer_frontend", "llvm_option", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_HANDLECXX_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_handle_cxx",
                 "clangHandleCXX",
@@ -1021,7 +1040,8 @@ def _llvm_installed_impl(repository_ctx):
                      ] if "X86" in supported_targets else [])
                   + (["llvm_x_core_code_gen", "llvm_x_core_desc",
                       "llvm_x_core_disassembler", "llvm_x_core_info"
-                     ] if "XCore" in supported_targets else [])),
+                     ] if "XCore" in supported_targets else [])
+                  + (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_HANDLELLVM_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_handle_llvm",
                 "clangHandleLLVM",
@@ -1033,27 +1053,33 @@ def _llvm_installed_impl(repository_ctx):
                 ] + (["llvm_x86_code_gen", "llvm_x86_asm_parser",
                       "llvm_x86_desc", "llvm_x86_disassembler",
                       "llvm_x86_info", "llvm_x86_utils"
-                     ] if "X86" in supported_targets else [])),
+                     ] if "X86" in supported_targets else [])
+                  + (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_INDEX_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_index",
                 "clangIndex",
                 ["clang_ast", "clang_basic", "clang_format", "clang_frontend",
                  "clang_lex", "clang_rewrite", "clang_serialization",
-                 "clang_tooling_core", "llvm_core", "llvm_support"]),
+                 "clang_tooling_core", "llvm_core", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_LEX_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_lex",
                 "clangLex",
-                ["clang_basic", "llvm_support"]),
+                ["clang_basic", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_LIBCLANG_LIB}":
             _llvm_get_shared_library_rule(ctx, prx, "clang_libclang",
                 "libclang",
+                ["clang_headers", "llvm_headers"] if add_hdrs else [],
                 ignore_prefix = True),
         "%{CLANG_LIBCLANG_COPY_GENRULE}":
             _llvm_get_shared_lib_genrule(ctx, prx, "clang_copy_libclang",
                 llvm_path, "libclang", ignore_prefix = True),
         "%{CLANG_LIBCLANGCPP_LIB}":
             _llvm_get_shared_library_rule(ctx, prx, "clang_libclang_cpp",
-                "libclang-cpp", ignore_prefix = True, nix_only = True),
+                "libclang-cpp",
+                ["clang_headers", "llvm_headers"] if add_hdrs else [],
+                ignore_prefix = True, nix_only = True),
         "%{CLANG_LIBCLANGCPP_COPY_GENRULE}":
             _llvm_get_shared_lib_genrule(ctx, prx, "clang_copy_libclang_cpp",
                 llvm_path, "libclang-cpp", ignore_prefix = True, nix_only=True),
@@ -1061,76 +1087,90 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "clang_parse",
                 "clangParse",
                 ["clang_ast", "clang_basic", "clang_lex", "clang_sema",
-                 "llvm_mc", "llvm_mc_parser", "llvm_support"]),
+                 "llvm_mc", "llvm_mc_parser", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_REWRITE_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_rewrite",
                 "clangRewrite",
-                ["clang_basic", "clang_lex", "llvm_support"]),
+                ["clang_basic", "clang_lex", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_REWRITEFRONTEND_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_rewrite_frontend",
                 "clangRewriteFrontend",
                 ["clang_ast", "clang_basic", "clang_edit", "clang_frontend",
                  "clang_lex", "clang_rewrite", "clang_serialization",
-                 "llvm_support"]),
+                 "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_SEMA_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_sema",
                 "clangSema",
                 ["clang_ast", "clang_analysis", "clang_basic",
-                 "clang_edit", "clang_lex", "llvm_support"]),
+                 "clang_edit", "clang_lex", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_SERIALIZATION_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_serialization",
                 "clangSerialization",
                 ["clang_ast", "clang_basic", "clang_lex", "clang_sema",
-                 "llvm_bit_reader", "llvm_bitstream_reader", "llvm_support"]),
+                 "llvm_bit_reader", "llvm_bitstream_reader", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_STATICANALYZERCHECKERS_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_static_analyzer_checkers",
                 "clangStaticAnalyzerCheckers",
                 ["clang_ast", "clang_ast_matchers", "clang_analysis", "clang_basic",
-                 "clang_lex", "clang_static_analyzer_core", "llvm_support"]),
+                 "clang_lex", "clang_static_analyzer_core", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_STATICANALYZERCORE_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_static_analyzer_core",
                 "clangStaticAnalyzerCore",
                 ["clang_ast", "clang_ast_matchers", "clang_analysis", "clang_basic",
                  "clang_cross_tu", "clang_frontend", "clang_lex", "clang_rewrite",
-                 "llvm_support"]),
+                 "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_STATICANALYZERFRONTEND_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_static_analyzer_frontend",
                 "clangStaticAnalyzerFrontend",
                 ["clang_ast", "clang_analysis", "clang_basic", "clang_cross_tu",
                  "clang_frontend", "clang_lex", "clang_static_analyzer_checkers",
-                 "clang_static_analyzer_core", "llvm_support"]),
+                 "clang_static_analyzer_core", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_TOOLING_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_tooling",
                 "clangTooling",
                 ["clang_ast", "clang_ast_matchers", "clang_basic", "clang_driver",
                  "clang_format", "clang_frontend", "clang_lex", "clang_rewrite",
                  "clang_serialization", "clang_tooling_core",
-                 "llvm_option", "llvm_support"]),
+                 "llvm_option", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_TOOLINGASTDIFF_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_tooling_ast_diff",
                 "clangToolingASTDiff",
-                ["clang_ast", "clang_basic", "clang_lex", "llvm_support"]),
+                ["clang_ast", "clang_basic", "clang_lex", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_TOOLINGCORE_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_tooling_core",
                 "clangToolingCore",
                 ["clang_ast", "clang_basic", "clang_lex", "clang_rewrite",
-                 "llvm_support"]),
+                 "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_TOOLINGINCLUSIONS_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_tooling_inclusions",
                 "clangToolingInclusions",
                 ["clang_basic", "clang_lex", "clang_rewrite",
-                 "clang_tooling_core", "llvm_support"]),
+                 "clang_tooling_core", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_TOOLINGREFACTORING_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_tooling_refactoring",
                 "clangToolingRefactoring",
                 ["clang_ast", "clang_ast_matchers", "clang_basic", "clang_format",
                  "clang_index", "clang_lex", "clang_rewrite",
-                 "clang_tooling_core", "llvm_support"]),
+                 "clang_tooling_core", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_TOOLINGSYNTAX_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_tooling_syntax",
                 "clangToolingSyntax",
                 ["clang_ast", "clang_basic", "clang_frontend", "clang_lex",
-                 "clang_tooling_core", "llvm_support"]),
+                 "clang_tooling_core", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
 
         "%{LLVM_AGGRESSIVEINSTCOMBINE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_aggressive_inst_combine",
@@ -1169,6 +1209,7 @@ def _llvm_installed_impl(repository_ctx):
                 "LLVMBitstreamReader", ["llvm_support"]),
         "%{LLVM_C_LIB}":
             _llvm_get_shared_library_rule(ctx, prx, "llvm_c", "LLVM-C",
+                ["llvm_headers"] if add_hdrs else [],
                 win_only = True),
         "%{LLVM_C_COPY_GENRULE}":
             _llvm_get_shared_lib_genrule(ctx, prx, "llvm_copy_c",
@@ -1374,7 +1415,9 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_SUPPORT_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_support",
                 "LLVMSupport",
-                ["llvm_demangle"] + (["z3_solver"] if _enable_local_z3(ctx) else []),
+                ["llvm_demangle"] +
+                  (["llvm_headers"] if add_hdrs else []) +
+                  (["z3_solver"] if _enable_local_z3(ctx) else []),
                 _llvm_get_link_opts(ctx)),
         "%{LLVM_SYMBOLIZE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_symbolize",
@@ -1846,6 +1889,7 @@ llvm_configure = repository_rule(
         "strip_prefix": attr.string(default = ""),
         "llvm_prefix": attr.string(default = "llvm_"),
         "clang_prefix": attr.string(default = "clang_"),
+        "add_headers_to_deps": attr.bool(default = True),
     },
     environ = [
         _LLVM_INSTALL_PREFIX,
