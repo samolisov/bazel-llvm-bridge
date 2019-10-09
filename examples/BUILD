@@ -40,10 +40,10 @@ load("@local_llvm//:llvm_config.bzl",
     "if_has_powerpc",
     "if_has_riscv",
     "if_has_sparc",
-    "if_has_systemz",
-    "if_has_webassembly",
+    "if_has_system_z",
+    "if_has_web_assembly",
     "if_has_x86",
-    "if_has_xcore")
+    "if_has_x_core")
 
 cc_binary(
     name = 'llvm_bb_counter',
@@ -102,10 +102,10 @@ cc_binary(
         + if_has_powerpc(["LLVM_SUPPORTS_TARGET_POWERPC"])
         + if_has_riscv(["LLVM_SUPPORTS_TARGET_RISCV"])
         + if_has_sparc(["LLVM_SUPPORTS_TARGET_SPARC"])
-        + if_has_systemz(["LLVM_SUPPORTS_TARGET_SYSTEMZ"])
-        + if_has_webassembly(["LLVM_SUPPORTS_TARGET_WEBASSEMBLY"])
+        + if_has_system_z(["LLVM_SUPPORTS_TARGET_SYSTEMZ"])
+        + if_has_web_assembly(["LLVM_SUPPORTS_TARGET_WEBASSEMBLY"])
         + if_has_x86(["LLVM_SUPPORTS_TARGET_X86"])
-        + if_has_xcore(["LLVM_SUPPORTS_TARGET_XCORE"]),
+        + if_has_x_core(["LLVM_SUPPORTS_TARGET_XCORE"]),
     deps = if_has_aarch64([
         "@local_llvm//:aarch64_asm_parser",
         "@local_llvm//:aarch64_code_gen",
@@ -152,21 +152,21 @@ cc_binary(
         "@local_llvm//:sparc_asm_parser",
         "@local_llvm//:sparc_code_gen",
         "@local_llvm//:sparc_disassembler",
-    ]) + if_has_systemz([
-        "@local_llvm//:systemz_asm_parser",
-        "@local_llvm//:systemz_code_gen",
-        "@local_llvm//:systemz_disassembler",
-    ]) + if_has_webassembly([
-        "@local_llvm//:webassembly_asm_parser",
-        "@local_llvm//:webassembly_code_gen",
-        "@local_llvm//:webassembly_disassembler",
+    ]) + if_has_system_z([
+        "@local_llvm//:system_z_asm_parser",
+        "@local_llvm//:system_z_code_gen",
+        "@local_llvm//:system_z_disassembler",
+    ]) + if_has_web_assembly([
+        "@local_llvm//:web_assembly_asm_parser",
+        "@local_llvm//:web_assembly_code_gen",
+        "@local_llvm//:web_assembly_disassembler",
     ]) + if_has_x86([
         "@local_llvm//:x86_asm_parser",
         "@local_llvm//:x86_code_gen",
         "@local_llvm//:x86_disassembler",
-    ]) + if_has_xcore([
-        "@local_llvm//:xcore_code_gen",
-        "@local_llvm//:xcore_disassembler",
+    ]) + if_has_x_core([
+        "@local_llvm//:x_core_code_gen",
+        "@local_llvm//:x_core_disassembler",
     ])
 )
 
