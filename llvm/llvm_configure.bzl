@@ -696,11 +696,28 @@ def _llvm_get_formatted_target_list(repository_ctx, targets):
 
     return "\n".join(fmt_targets)
 
+def _llvm_local_enabled(repository_ctx):
+    """Returns True if a path to a local LLVM installation is passed in
+       the '_LLVM_INSTALL_PREFIX' environment variable. Fails if the variable
+       is not defined and the 'urls' attribute is empty.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+    Returns:
+        Whether the local LLVM installation must be used.
+    """
+    enabled = _LLVM_INSTALL_PREFIX in repository_ctx.os.environ
+    if not enabled and len(repository_ctx.attr.urls) < 1:
+        _fail("\n".join([
+            "The 'urls' attribute is empty so that the path to a local LLVM installation",
+            "must be assigned to the '%s' environment variable." % _LLVM_INSTALL_PREFIX
+        ]))
+    return enabled
+
 def _llvm_get_install_path(repository_ctx):
     """Returns a path to a local LLVM installation passed in
        the '_LLVM_INSTALL_PREFIX' environment variable.
-       Fails if the variable is not defined or the path
-       doesn't exist.
+       Fails if the variable is not defined or the path doesn't exist.
 
     Args:
         repository_ctx: the repository_ctx object.
@@ -797,13 +814,39 @@ def _llvm_installed_impl(repository_ctx):
     }
     # if there are duplicated prefixes, fail.
     _llvm_check_duplicated_prefixes(prefix_dictionary)
-    llvm_path = _llvm_get_install_path(repository_ctx)
-    repository_ctx.symlink("%s/include" % llvm_path, "include")
-    repository_ctx.symlink("%s/lib" % llvm_path, "lib")
+
+    if _llvm_local_enabled(repository_ctx):
+        # setup local LLVM repository
+        llvm_path = _llvm_get_install_path(repository_ctx)
+        repository_ctx.symlink("%s/include" % llvm_path, "include")
+        repository_ctx.symlink("%s/lib" % llvm_path, "lib")
+    else:
+        # setup remote LLVM repository.
+        repository_ctx.download_and_extract(
+            repository_ctx.attr.urls,
+            sha256 = repository_ctx.attr.sha256,
+            stripPrefix = repository_ctx.attr.strip_prefix,
+        )
+
+        if repository_ctx.attr.build_file:
+            # Also setup BUILD file if it is specified. If the file is specified,
+            # we should not generate it, exit. Notice: the BUILD file must provide
+            # the same set of targets as this repository rule does.
+            repository_ctx.symlink(repository_ctx.attr.build_file, "BUILD")
+            # Also config file can be specified. If so, the file will be symlinked
+            # to llvm_config.bzl
+            if repository_ctx.attr.config_file:
+                repository_ctx.symlink(repository_ctx.attr.config_file, "llvm_config.bzl")
+            return
+
+        llvm_path = repository_ctx.path(".") # points to the root of the repository
+
+    # Anyway download the LICENSE file
     repository_ctx.download(
         url = _LLVM_LICENSE_FILE_PATH,
         output = "./LICENSE.TXT",
         sha256 = _LLVM_LICENSE_FILE_SHA256)
+
     if _enable_local_z3(repository_ctx):
         z3_path = repository_ctx.os.environ[_Z3_INSTALL_PREFIX]
         _z3_get_libraries(repository_ctx, z3_path)
@@ -812,6 +855,7 @@ def _llvm_installed_impl(repository_ctx):
             " ".join(["To enable the solver, set the environment variable",
              "'%s' to the full path of the solver's local installation." % _Z3_INSTALL_PREFIX,
             ]))
+
     supported_targets = _llvm_get_target_list(repository_ctx)
     ctx = repository_ctx
     prx = prefix_dictionary
@@ -1806,6 +1850,11 @@ def _llvm_installed_impl(repository_ctx):
 llvm_configure = repository_rule(
     implementation = _llvm_installed_impl,
     attrs = {
+        "build_file": attr.label(),
+        "config_file": attr.label(), # Taken into account only if build_file is specified
+        "urls": attr.string_list(default = []),
+        "sha256": attr.string(default = ""),
+        "strip_prefix": attr.string(default = ""),
         "llvm_prefix": attr.string(default = "llvm_"),
         "clang_prefix": attr.string(default = "clang_"),
     },

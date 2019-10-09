@@ -15,8 +15,15 @@ llvm_configure(
     name = "local_llvm",
     llvm_prefix = "", # default value: llvm_
     clang_prefix = "cl_", # default value: clang_
-    # The LLVM_INSTALL_PREFIX environment variable must point to
-    # a local llvm/clang installation.
+
+    # Either the LLVM_INSTALL_PREFIX environment variable must point to
+    # a local llvm/clang installation or the 'urls', 'sha256' and, optionaly,
+    # 'strip_prefix' must be specified.
+
+    # If a build_file (and optionaly config_file) are specified,
+    # the repository rule will generate no BUILD file, the specified one will
+    # be taken into account instead.
+
     # The Z3_INSTALL_PREFIX environment variable must point to
     # a local Z3 Solver installation when LLVM is linked against Z3.
 )
