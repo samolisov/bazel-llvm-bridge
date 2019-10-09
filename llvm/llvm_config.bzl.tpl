@@ -63,14 +63,14 @@ def if_has_powerpc(if_true, if_false = []):
 def if_has_sparc(if_true, if_false = []):
     return if_true if "Sparc" in llvm_targets else if_false
 
-def if_has_systemz(if_true, if_false = []):
+def if_has_system_z(if_true, if_false = []):
     return if_true if "SystemZ" in llvm_targets else if_false
 
-def if_has_webassembly(if_true, if_false = []):
+def if_has_web_assembly(if_true, if_false = []):
     return if_true if "WebAssembly" in llvm_targets else if_false
 
 def if_has_x86(if_true, if_false = []):
     return if_true if "X86" in llvm_targets else if_false
 
-def if_has_xcore(if_true, if_false = []):
+def if_has_x_core(if_true, if_false = []):
     return if_true if "XCore" in llvm_targets else if_false

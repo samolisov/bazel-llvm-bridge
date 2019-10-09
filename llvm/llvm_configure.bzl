@@ -901,8 +901,8 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_core", "llvm_coroutines", "llvm_coverage",
                  "llvm_ipo", "llvm_ir_reader", "llvm_aggressive_inst_combine",
                  "llvm_inst_combine", "llvm_instrumentation", "llvm_lto",
-                 "llvm_linker", "llvm_mc", "llvm_objc_arc_opts", "llvm_object",
-                 "llvm_passes", "llvm_profile_data", "llvm_scalar_opts",
+                 "llvm_linker", "llvm_mc", "llvm_objc_arc", "llvm_object",
+                 "llvm_passes", "llvm_profile_data", "llvm_scalar",
                  "llvm_support", "llvm_target", "llvm_transform_utils"]),
         "%{CLANG_CROSSTU_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_cross_tu",
@@ -993,32 +993,32 @@ def _llvm_installed_impl(repository_ctx):
                       "llvm_sparc_asm_printer", "llvm_sparc_desc",
                       "llvm_sparc_disassembler", "llvm_sparc_info"
                      ] if "Sparc" in supported_targets else [])
-                  + (["llvm_systemz_code_gen", "llvm_systemz_asm_parser",
-                      "llvm_systemz_asm_printer", "llvm_systemz_desc",
-                      "llvm_systemz_disassembler", "llvm_systemz_info"
+                  + (["llvm_system_z_code_gen", "llvm_system_z_asm_parser",
+                      "llvm_system_z_asm_printer", "llvm_system_z_desc",
+                      "llvm_system_z_disassembler", "llvm_system_z_info"
                      ] if "SystemZ" in supported_targets else [])
-                  + (["llvm_webassembly_code_gen",
-                      "llvm_webassembly_asm_parser",
-                      "llvm_webassembly_asm_printer",
-                      "llvm_webassembly_desc",
-                      "llvm_webassembly_disassembler",
-                      "llvm_webassembly_info"
+                  + (["llvm_web_assembly_code_gen",
+                      "llvm_web_assembly_asm_parser",
+                      "llvm_web_assembly_asm_printer",
+                      "llvm_web_assembly_desc",
+                      "llvm_web_assembly_disassembler",
+                      "llvm_web_assembly_info"
                      ] if "WebAssembly" in supported_targets else [])
                   + (["llvm_x86_code_gen", "llvm_x86_asm_parser",
                       "llvm_x86_asm_printer", "llvm_x86_desc",
                       "llvm_x86_disassembler", "llvm_x86_info",
                       "llvm_x86_utils"
                      ] if "X86" in supported_targets else [])
-                  + (["llvm_xcore_code_gen", "llvm_xcore_desc",
-                      "llvm_xcore_asm_printer", "llvm_xcore_disassembler",
-                      "llvm_xcore_info"
+                  + (["llvm_x_core_code_gen", "llvm_x_core_desc",
+                      "llvm_x_core_asm_printer", "llvm_x_core_disassembler",
+                      "llvm_x_core_info"
                      ] if "XCore" in supported_targets else [])),
         "%{CLANG_HANDLELLVM_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_handle_llvm",
                 "clangHandleLLVM",
                 ["llvm_analysis", "llvm_code_gen", "llvm_core",
                  "llvm_execution_engine", "llvm_ipo", "llvm_ir_reader",
-                 "llvm_mc", "llvm_mc_jit", "llvm_object", "llvm_runtime_dy_ld",
+                 "llvm_mc", "llvm_mcjit", "llvm_object", "llvm_runtime_dyld",
                  "llvm_selection_dag", "llvm_support", "llvm_target",
                  "llvm_transform_utils"
                 ] + (["llvm_x86_code_gen", "llvm_x86_asm_parser",
@@ -1119,8 +1119,8 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_ANALYSIS_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_analysis",
                 "LLVMAnalysis",
-                ["llvm_binary_format", "llvm_core", "llvm_object", "llvm_profile_data",
-                 "llvm_support"]),
+                ["llvm_binary_format", "llvm_core", "llvm_object",
+                 "llvm_profile_data", "llvm_support"]),
         "%{LLVM_ASMPRARSER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_asm_parser",
                 "LLVMAsmParser",
@@ -1128,9 +1128,10 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_ASMPRINTER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_asm_printer",
                 "LLVMAsmPrinter",
-                ["llvm_analysis", "llvm_binary_format", "llvm_code_gen", "llvm_core",
-                 "llvm_debug_info_codeview", "llvm_debug_info_msf", "llvm_mc",
-                 "llvm_mc_parser", "llvm_support", "llvm_target"]),
+                ["llvm_analysis", "llvm_binary_format", "llvm_code_gen",
+                 "llvm_core", "llvm_debug_info_code_view",
+                 "llvm_debug_info_msf", "llvm_mc", "llvm_mc_parser",
+                 "llvm_support", "llvm_target"]),
         "%{LLVM_BINARYFORMAT_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_binary_format",
                 "LLVMBinaryFormat", ["llvm_support"]),
@@ -1148,7 +1149,7 @@ def _llvm_installed_impl(repository_ctx):
                 "LLVMCodeGen",
                 ["llvm_analysis", "llvm_bit_reader", "llvm_bit_writer",
                  "llvm_core", "llvm_mc", "llvm_profile_data",
-                 "llvm_scalar_opts", "llvm_support", "llvm_target",
+                 "llvm_scalar", "llvm_support", "llvm_target",
                  "llvm_transform_utils"]),
         "%{LLVM_CORE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_core",
@@ -1157,7 +1158,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_COROUTINES_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_coroutines",
                 "LLVMCoroutines",
-                ["llvm_analysis", "llvm_core", "llvm_scalar_opts",
+                ["llvm_analysis", "llvm_core", "llvm_scalar",
                  "llvm_support", "llvm_transform_utils", "llvm_ipo"]),
         "%{LLVM_COVERAGE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_coverage",
@@ -1165,7 +1166,7 @@ def _llvm_installed_impl(repository_ctx):
                 ["llvm_core", "llvm_object", "llvm_profile_data",
                  "llvm_support"]),
         "%{LLVM_DEBUGINFOCODEVIEW_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_debug_info_codeview",
+            _llvm_get_library_rule(ctx, prx, "llvm_debug_info_code_view",
                 "LLVMDebugInfoCodeView",
                 ["llvm_debug_info_msf", "llvm_support"]),
         "%{LLVM_DEBUGINFODWARF_LIB}":
@@ -1179,28 +1180,28 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_DEBUGINFOPDB_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_debug_info_pdb",
                 "LLVMDebugInfoPDB",
-                ["llvm_debug_info_codeview", "llvm_debug_info_msf",
+                ["llvm_debug_info_code_view", "llvm_debug_info_msf",
                  "llvm_object", "llvm_support"]),
         "%{LLVM_DEMANGLE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_demangle",
                 "LLVMDemangle"),
         "%{LLVM_DLLTOOLDRIVER_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_dll_tool_driver",
+            _llvm_get_library_rule(ctx, prx, "llvm_dlltool_driver",
                 "LLVMDlltoolDriver",
                 ["llvm_object", "llvm_option", "llvm_support"]),
         "%{LLVM_EXECUTION_ENGINE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_execution_engine",
                 "LLVMExecutionEngine",
-                ["llvm_core", "llvm_mc", "llvm_object", "llvm_runtime_dy_ld",
+                ["llvm_core", "llvm_mc", "llvm_object", "llvm_runtime_dyld",
                  "llvm_support", "llvm_target"]),
         "%{LLVM_FUZZMUTATE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_fuzz_mutate",
                 "LLVMFuzzMutate",
                 ["llvm_analysis", "llvm_bit_reader", "llvm_bit_writer",
-                 "llvm_core", "llvm_scalar_opts", "llvm_support",
+                 "llvm_core", "llvm_scalar", "llvm_support",
                  "llvm_target"]),
         "%{LLVM_GLOBALISEL_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_global_isel",
+            _llvm_get_library_rule(ctx, prx, "llvm_global_i_sel",
                 "LLVMGlobalISel",
                 ["llvm_analysis", "llvm_code_gen", "llvm_core", "llvm_mc",
                  "llvm_support", "llvm_target", "llvm_transform_utils"]),
@@ -1231,7 +1232,7 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_bit_reader", "llvm_bit_writer", "llvm_core",
                  "llvm_ir_reader", "llvm_inst_combine","llvm_instrumentation",
                  "llvm_linker", "llvm_object", "llvm_profile_data",
-                 "llvm_scalar_opts", "llvm_support", "llvm_transform_utils",
+                 "llvm_scalar", "llvm_support", "llvm_transform_utils",
                  "llvm_vectorize"]),
         "%{LLVM_LIBDRIVER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_lib_driver",
@@ -1251,23 +1252,23 @@ def _llvm_installed_impl(repository_ctx):
                 ["llvm_aggressive_inst_combine", "llvm_analysis",
                  "llvm_bit_reader", "llvm_bit_writer", "llvm_code_gen",
                  "llvm_core", "llvm_inst_combine", "llvm_linker", "llvm_mc",
-                 "llvm_objc_arc_opts", "llvm_object", "llvm_passes",
-                 "llvm_scalar_opts", "llvm_support", "llvm_target",
+                 "llvm_objc_arc", "llvm_object", "llvm_passes",
+                 "llvm_scalar", "llvm_support", "llvm_target",
                  "llvm_transform_utils", "llvm_ipo"]),
         "%{LLVM_MC_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_mc",
                 "LLVMMC",
-                ["llvm_binary_format", "llvm_debug_info_codeview",
+                ["llvm_binary_format", "llvm_debug_info_code_view",
                  "llvm_support"]),
         "%{LLVM_MCA_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_mca",
                 "LLVMMCA",
                 ["llvm_mc", "llvm_support"]),
         "%{LLVM_MCJIT_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_mc_jit",
+            _llvm_get_library_rule(ctx, prx, "llvm_mcjit",
                 "LLVMMCJIT",
                 ["llvm_core", "llvm_execution_engine", "llvm_object",
-                 "llvm_runtime_dy_ld", "llvm_support", "llvm_target"]),
+                 "llvm_runtime_dyld", "llvm_support", "llvm_target"]),
         "%{LLVM_MCPARSER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_mc_parser",
                 "LLVMMCParser",
@@ -1281,8 +1282,8 @@ def _llvm_installed_impl(repository_ctx):
                 "LLVMMIRParser",
                 ["llvm_asm_parser", "llvm_binary_format", "llvm_code_gen",
                  "llvm_core", "llvm_mc", "llvm_support", "llvm_target"]),
-        "%{LLVM_OBJCARCOPTS_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_objc_arc_opts",
+        "%{LLVM_OBJCARC_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_objc_arc",
                 "LLVMObjCARCOpts",
                 ["llvm_analysis", "llvm_core", "llvm_support",
                  "llvm_transform_utils"]),
@@ -1294,7 +1295,7 @@ def _llvm_installed_impl(repository_ctx):
        "%{LLVM_OBJECTYAML_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_object_yaml",
                 "LLVMObjectYAML",
-                ["llvm_debug_info_codeview", "llvm_support"]),
+                ["llvm_debug_info_code_view", "llvm_support"]),
        "%{LLVM_OPTION_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_option",
                 "LLVMOption",
@@ -1307,26 +1308,26 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "llvm_orc_jit",
                 "LLVMOrcJIT",
                 ["llvm_core", "llvm_execution_engine", "llvm_mc",
-                 "llvm_object", "llvm_runtime_dy_ld", "llvm_support",
+                 "llvm_object", "llvm_runtime_dyld", "llvm_support",
                  "llvm_target", "llvm_transform_utils"]),
         "%{LLVM_PASSES_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_passes",
                 "LLVMPasses",
                 ["llvm_aggressive_inst_combine", "llvm_analysis",
                  "llvm_code_gen", "llvm_core", "llvm_inst_combine",
-                 "llvm_instrumentation", "llvm_scalar_opts",
-                 "llvm_support", "llvm_target", "llvm_transform_utils",
-                 "llvm_vectorize", "llvm_ipo"]),
+                 "llvm_instrumentation", "llvm_scalar", "llvm_support",
+                 "llvm_target", "llvm_transform_utils", "llvm_vectorize",
+                 "llvm_ipo"]),
         "%{LLVM_PROFILEDATA_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_profile_data",
                 "LLVMProfileData",
                 ["llvm_core", "llvm_support"]),
         "%{LLVM_RUNTIMEDYLD_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_runtime_dy_ld",
+            _llvm_get_library_rule(ctx, prx, "llvm_runtime_dyld",
                 "LLVMRuntimeDyld",
                 ["llvm_mc", "llvm_object", "llvm_support"]),
-        "%{LLVM_SCALAROPTS_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_scalar_opts",
+        "%{LLVM_SCALAR_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_scalar",
                 "LLVMScalarOpts",
                 ["llvm_aggressive_inst_combine", "llvm_analysis",
                  "llvm_core", "llvm_inst_combine", "llvm_support",
@@ -1347,7 +1348,7 @@ def _llvm_installed_impl(repository_ctx):
                 ["llvm_debug_info_dwarf", "llvm_debug_info_pdb",
                  "llvm_demangle", "llvm_object", "llvm_support"]),
         "%{LLVM_TABLEGEN_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_table_gen",
+            _llvm_get_library_rule(ctx, prx, "llvm_tablegen",
                 "LLVMTableGen",
                 ["llvm_support"]),
         "%{LLVM_TARGET_LIB}":
@@ -1372,7 +1373,7 @@ def _llvm_installed_impl(repository_ctx):
                 "LLVMWindowsManifest",
                 ["llvm_support"]),
         "%{LLVM_XRAY_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_xray",
+            _llvm_get_library_rule(ctx, prx, "llvm_x_ray",
                 "LLVMXRay",
                 ["llvm_object", "llvm_support"]),
         "%{LLVM_AARCH64_ASMPARSER_LIB}":
@@ -1390,7 +1391,7 @@ def _llvm_installed_impl(repository_ctx):
                 ["llvm_aarch64_asm_printer", "llvm_aarch64_desc",
                  "llvm_aarch64_info", "llvm_aarch64_utils", "llvm_analysis",
                  "llvm_asm_printer", "llvm_code_gen", "llvm_core",
-                 "llvm_global_isel", "llvm_mc", "llvm_scalar_opts",
+                 "llvm_global_i_sel", "llvm_mc", "llvm_scalar",
                  "llvm_selection_dag", "llvm_support", "llvm_target"]),
          "%{LLVM_AARCH64_DESC_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_aarch64_desc",
@@ -1425,8 +1426,8 @@ def _llvm_installed_impl(repository_ctx):
                 ["llvm_amdgpu_asm_printer", "llvm_amdgpu_desc",
                  "llvm_amdgpu_info", "llvm_amdgpu_utils", "llvm_analysis",
                  "llvm_asm_printer", "llvm_binary_format", "llvm_code_gen",
-                 "llvm_core", "llvm_global_isel", "llvm_mc",
-                 "llvm_scalar_opts", "llvm_selection_dag", "llvm_support",
+                 "llvm_core", "llvm_global_i_sel", "llvm_mc",
+                 "llvm_scalar", "llvm_selection_dag", "llvm_support",
                  "llvm_target", "llvm_transform_utils", "llvm_vectorize",
                  "llvm_ipo"]),
         "%{LLVM_AMDGPU_DESC_LIB}":
@@ -1462,8 +1463,8 @@ def _llvm_installed_impl(repository_ctx):
                 "LLVMARMCodeGen",
                 ["llvm_arm_asm_printer", "llvm_arm_desc", "llvm_arm_info",
                  "llvm_arm_utils", "llvm_analysis", "llvm_asm_printer",
-                 "llvm_code_gen", "llvm_core", "llvm_global_isel", "llvm_mc",
-                 "llvm_scalar_opts", "llvm_selection_dag", "llvm_support",
+                 "llvm_code_gen", "llvm_core", "llvm_global_i_sel", "llvm_mc",
+                 "llvm_scalar", "llvm_selection_dag", "llvm_support",
                  "llvm_target", "llvm_transform_utils"]),
         "%{LLVM_ARM_DESC_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_arm_desc",
@@ -1523,7 +1524,7 @@ def _llvm_installed_impl(repository_ctx):
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_hexagon_asm_parser",
                  "llvm_hexagon_desc", "llvm_hexagon_info",
-                 "llvm_mc", "llvm_scalar_opts", "llvm_selection_dag",
+                 "llvm_mc", "llvm_scalar", "llvm_selection_dag",
                  "llvm_support", "llvm_target", "llvm_transform_utils",
                  "llvm_ipo"]),
         "%{LLVM_HEXAGON_DESC_LIB}":
@@ -1583,7 +1584,7 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "llvm_mips_code_gen",
                 "LLVMMipsCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
-                 "llvm_core", "llvm_global_isel", "llvm_mc",
+                 "llvm_core", "llvm_global_i_sel", "llvm_mc",
                  "llvm_mips_asm_printer", "llvm_mips_desc",
                  "llvm_mips_info", "llvm_selection_dag",
                  "llvm_support", "llvm_target"]),
@@ -1639,7 +1640,7 @@ def _llvm_installed_impl(repository_ctx):
                 "LLVMNVPTXCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_mc", "llvm_nvptx_asm_printer",
-                 "llvm_nvptx_desc", "llvm_nvptx_info", "llvm_scalar_opts",
+                 "llvm_nvptx_desc", "llvm_nvptx_info", "llvm_scalar",
                  "llvm_selection_dag", "llvm_support", "llvm_target",
                  "llvm_transform_utils", "llvm_vectorize", "llvm_ipo"]),
         "%{LLVM_NVPTX_DESC_LIB}":
@@ -1666,7 +1667,7 @@ def _llvm_installed_impl(repository_ctx):
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_mc", "llvm_powerpc_asm_printer",
                  "llvm_powerpc_desc", "llvm_powerpc_info",
-                 "llvm_scalar_opts", "llvm_selection_dag",
+                 "llvm_scalar", "llvm_selection_dag",
                  "llvm_support", "llvm_target", "llvm_transform_utils"]),
         "%{LLVM_POWERPC_DESC_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_powerpc_desc",
@@ -1710,66 +1711,66 @@ def _llvm_installed_impl(repository_ctx):
                 "LLVMSparcInfo",
                 ["llvm_support"]),
         "%{LLVM_SYSTEMZ_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_systemz_asm_parser",
+            _llvm_get_library_rule(ctx, prx, "llvm_system_z_asm_parser",
                 "LLVMSystemZAsmParser",
                 ["llvm_mc", "llvm_mc_parser", "llvm_support",
-                 "llvm_systemz_asm_printer", "llvm_systemz_desc",
-                 "llvm_systemz_info"]),
+                 "llvm_system_z_asm_printer", "llvm_system_z_desc",
+                 "llvm_system_z_info"]),
         "%{LLVM_SYSTEMZ_ASMPRINTER_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_systemz_asm_printer",
+            _llvm_get_library_rule(ctx, prx, "llvm_system_z_asm_printer",
                 "LLVMSystemZAsmPrinter",
                 ["llvm_mc", "llvm_support"]),
         "%{LLVM_SYSTEMZ_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_systemz_code_gen",
+            _llvm_get_library_rule(ctx, prx, "llvm_system_z_code_gen",
                 "LLVMSystemZCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
-                 "llvm_core", "llvm_mc", "llvm_scalar_opts",
+                 "llvm_core", "llvm_mc", "llvm_scalar",
                  "llvm_selection_dag", "llvm_support",
-                 "llvm_systemz_asm_printer", "llvm_systemz_desc",
-                 "llvm_systemz_info", "llvm_target"]),
+                 "llvm_system_z_asm_printer", "llvm_system_z_desc",
+                 "llvm_system_z_info", "llvm_target"]),
         "%{LLVM_SYSTEMZ_DESC_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_systemz_desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_system_z_desc",
                 "LLVMSystemZDesc",
-                ["llvm_mc", "llvm_support", "llvm_systemz_asm_printer",
-                 "llvm_systemz_info"]),
+                ["llvm_mc", "llvm_support", "llvm_system_z_asm_printer",
+                 "llvm_system_z_info"]),
         "%{LLVM_SYSTEMZ_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_systemz_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_system_z_disassembler",
                 "LLVMSystemZDisassembler",
                 ["llvm_mc", "llvm_mc_disassembler", "llvm_support",
-                 "llvm_systemz_desc", "llvm_systemz_info"]),
+                 "llvm_system_z_desc", "llvm_system_z_info"]),
         "%{LLVM_SYSTEMZ_INFO_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_systemz_info",
+            _llvm_get_library_rule(ctx, prx, "llvm_system_z_info",
                 "LLVMSystemZInfo",
                 ["llvm_support"]),
         "%{LLVM_WEBASSEMBLY_ASMPARSER_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_webassembly_asm_parser",
+            _llvm_get_library_rule(ctx, prx, "llvm_web_assembly_asm_parser",
                 "LLVMWebAssemblyAsmParser",
                 ["llvm_mc", "llvm_mc_parser", "llvm_support",
-                 "llvm_webassembly_info"]),
+                 "llvm_web_assembly_info"]),
         "%{LLVM_WEBASSEMBLY_ASMPRINTER_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_webassembly_asm_printer",
+            _llvm_get_library_rule(ctx, prx, "llvm_web_assembly_asm_printer",
                 "LLVMWebAssemblyAsmPrinter",
                 ["llvm_mc", "llvm_support"]),
         "%{LLVM_WEBASSEMBLY_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_webassembly_code_gen",
+            _llvm_get_library_rule(ctx, prx, "llvm_web_assembly_code_gen",
                 "LLVMWebAssemblyCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
-                 "llvm_core", "llvm_mc", "llvm_scalar_opts",
+                 "llvm_core", "llvm_mc", "llvm_scalar",
                  "llvm_selection_dag", "llvm_support", "llvm_target",
-                 "llvm_transform_utils", "llvm_webassembly_asm_printer",
-                 "llvm_webassembly_desc", "llvm_webassembly_info"]),
+                 "llvm_transform_utils", "llvm_web_assembly_asm_printer",
+                 "llvm_web_assembly_desc", "llvm_web_assembly_info"]),
         "%{LLVM_WEBASSEMBLY_DESC_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_webassembly_desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_web_assembly_desc",
                 "LLVMWebAssemblyDesc",
-                ["llvm_mc", "llvm_support", "llvm_webassembly_asm_printer",
-                 "llvm_webassembly_info"]),
+                ["llvm_mc", "llvm_support", "llvm_web_assembly_asm_printer",
+                 "llvm_web_assembly_info"]),
         "%{LLVM_WEBASSEMBLY_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_webassembly_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_web_assembly_disassembler",
                 "LLVMWebAssemblyDisassembler",
                 ["llvm_mc_disassembler", "llvm_support",
-                 "llvm_webassembly_info"]),
+                 "llvm_web_assembly_info"]),
         "%{LLVM_WEBASSEMBLY_INFO_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_webassembly_info",
+            _llvm_get_library_rule(ctx, prx, "llvm_web_assembly_info",
                 "LLVMWebAssemblyInfo",
                 ["llvm_support"]),
         "%{LLVM_X86_ASMPARSER_LIB}":
@@ -1786,7 +1787,7 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "llvm_x86_code_gen",
                 "LLVMX86CodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
-                 "llvm_core", "llvm_global_isel", "llvm_mc", "llvm_profile_data",
+                 "llvm_core", "llvm_global_i_sel", "llvm_mc", "llvm_profile_data",
                  "llvm_selection_dag", "llvm_support", "llvm_target",
                  "llvm_x86_asm_printer", "llvm_x86_desc", "llvm_x86_info",
                  "llvm_x86_utils"]),
@@ -1808,27 +1809,28 @@ def _llvm_installed_impl(repository_ctx):
                 "LLVMX86Utils",
                 ["llvm_support"]),
         "%{LLVM_XCORE_ASMPRINTER_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_xcore_asm_printer",
+            _llvm_get_library_rule(ctx, prx, "llvm_x_core_asm_printer",
                 "LLVMXCoreAsmPrinter",
                 ["llvm_mc", "llvm_support"]),
         "%{LLVM_XCORE_CODEGEN_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_xcore_code_gen",
+            _llvm_get_library_rule(ctx, prx, "llvm_x_core_code_gen",
                 "LLVMXCoreCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_mc", "llvm_selection_dag", "llvm_support",
-                 "llvm_target", "llvm_transform_utils", "llvm_xcore_asm_printer",
-                 "llvm_xcore_desc", "llvm_xcore_info"]),
+                 "llvm_target", "llvm_transform_utils",
+                 "llvm_x_core_asm_printer", "llvm_x_core_desc",
+                 "llvm_x_core_info"]),
         "%{LLVM_XCORE_DESC_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_xcore_desc",
+            _llvm_get_library_rule(ctx, prx, "llvm_x_core_desc",
                 "LLVMXCoreDesc",
-                ["llvm_mc", "llvm_support", "llvm_xcore_asm_printer",
-                 "llvm_xcore_info"]),
+                ["llvm_mc", "llvm_support", "llvm_x_core_asm_printer",
+                 "llvm_x_core_info"]),
         "%{LLVM_XCORE_DISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_xcore_disassembler",
+            _llvm_get_library_rule(ctx, prx, "llvm_x_core_disassembler",
                 "LLVMXCoreDisassembler",
-                ["llvm_mc_disassembler", "llvm_support", "llvm_xcore_info"]),
+                ["llvm_mc_disassembler", "llvm_support", "llvm_x_core_info"]),
         "%{LLVM_XCORE_INFO_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_xcore_info",
+            _llvm_get_library_rule(ctx, prx, "llvm_x_core_info",
                 "LLVMXCoreInfo",
                 ["llvm_support"]),
         "%{LLVM_CONFIG_GENRULE}":
