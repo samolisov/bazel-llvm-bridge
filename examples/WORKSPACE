@@ -13,8 +13,9 @@ load("@bazel_llvm_bridge//llvm:llvm_configure.bzl", "llvm_configure")
 
 llvm_configure(
     name = "local_llvm",
-    llvm_prefix = "", # default value: llvm_
-    clang_prefix = "cl_", # default value: clang_
+    llvm_prefix = "",            # default value: llvm_
+    clang_prefix = "cl_",        # default value: clang_
+    add_headers_to_deps = False, # default value: True
 
     # Either the LLVM_INSTALL_PREFIX environment variable must point to
     # a local llvm/clang installation or the 'urls', 'sha256' and, optionaly,

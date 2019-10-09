@@ -60,11 +60,18 @@ llvm_configure(
     name = "local_llvm",
     llvm_prefix = "llvm_",
     clang_prefix = "clang_",
+    add_headers_to_deps = False,
 )
 ```
 
 Where `name` is whatever you want, default values for `llvm_prefix` and `clang_prefix`
-may be omitted. There are three ways to use the library: the first, primarily, is shown
+may be omitted. By default, the header libraries will be automatically included as dependency
+to the generated targets (the LLVM header library to LLVM's, Clang's and other project's
+targets, the Clang header library to Clang's targets, etc.) If you would like to manually
+put the header libraries to dependencies, set up the `add_headers_to_deps` attribute of the
+reporitory rule to `False`.
+
+There are three ways to use the library: the first, primarily, is shown
 above: the LLVM libraries are fetched from a local installation so the `LLVM_INSTALL_PREFIX`
 environment variable **must** points to the local installation.
 
