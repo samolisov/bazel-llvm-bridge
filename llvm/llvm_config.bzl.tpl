@@ -1,9 +1,13 @@
 # -*- Python -*-
 """Skylark macros for bazel-llvm-bridge.
 
-llvm_copts is a convenient set of platform-dependent compiler options
-to enable the building process of LLVM-dependent targets. It can disable
-RTTI and enable the right level of C++.
+llvm_nix_copts is a convenient set of platform-dependent compiler options
+to enable the building process of LLVM-dependent targets for *Nix platforms.
+It can disable RTTI and enable the right level of C++.
+
+llvm_win_copts is a convenient set of platform-dependent compiler options
+to enable the building process of LLVM-dependent targets for Windows platform.
+It can disable RTTI and enable the right level of C++.
 
 llvm_targets is a list of supported targets ("AArch64", "ARM", "X86", etc.)
 
@@ -12,20 +16,13 @@ if_has_<TARGET> is a conditional to check if we are building with the target
 otherwise the second one.
 """
 
-def _if_not_windows(a):
-    return select({
-        "//:windows": [],
-        "//conditions:default": a,
-    })
+llvm_nix_copts = [
+    "-std=c++14",
+    "-fno-rtti",
+]
 
-def _get_non_win_copts():
-    return [
-        "-std=c++14",
-        "-fno-rtti",
-    ]
-
-def llvm_copts():
-    return _if_not_windows(_get_non_win_copts())
+llvm_win_copts = [
+]
 
 llvm_targets = [
 %{LLVM_TARGETS}
