@@ -24,7 +24,4 @@ llvm_configure(
     # If a build_file (and optionaly config_file) are specified,
     # the repository rule will generate no BUILD file, the specified one will
     # be taken into account instead.
-
-    # The Z3_INSTALL_PREFIX environment variable must point to
-    # a local Z3 Solver installation when LLVM is linked against Z3.
 )

@@ -10,7 +10,6 @@
 _LLVM_LICENSE_FILE_PATH = "https://raw.githubusercontent.com/llvm/llvm-project/master/llvm/LICENSE.TXT"
 _LLVM_LICENSE_FILE_SHA256 = "8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee"
 _LLVM_INSTALL_PREFIX = "LLVM_INSTALL_PREFIX"
-_Z3_INSTALL_PREFIX = "Z3_INSTALL_PREFIX"
 
 def _tpl(repository_ctx, tpl, substitutions = {}, out = None):
     """Generate a build file for bazel based upon the `tpl` template."""
@@ -298,6 +297,62 @@ def _get_library_for_dirs(
         copts,
         linkopts)
 
+
+def _symlink_library(
+        repository_ctx,
+        library_path,
+        target):
+    """Symlink a library into the bazel building directory. If library path
+       is 'some_path/library.ext' and target is 'tgt', the library will be
+       symlinked into 'tgt/library.ext'.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        library_path: full path to the library file.
+        target: the symlink target.
+    Returns:
+        True if the library is found or False otherwise.
+    """
+
+    if repository_ctx.path(library_path).exists:
+        file_name = library_path[library_path.rfind("/") + 1:]
+        repository_ctx.symlink(library_path, "%s/%s" % (target, file_name))
+        return True
+    else:
+        return False
+
+def _is_ignored(
+        library_name,
+        ignored):
+    """Checks if the library name is in the list of ignored libraries.
+
+    Args:
+        library_name: the library name to check
+        ignored: the list of ignored libraries
+    Returns:
+        True if the library is found in the ignored list or False otherwise.
+    """
+    for ignored_postfix in ignored:
+        if library_name.endswith(ignored_postfix):
+            return True
+    return False
+
+def _is_shared_library(
+        repository_ctx,
+        library_file):
+    """Returns True if the extension of the 'library_file' says it is
+       a shared library.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        library_file: the library file to check
+    Returns:
+        True if the library_file is a shared library.
+    """
+    _, shared_library_ext, _ = _shared_library_file_params(repository_ctx)
+    ext = library_file[library_file.rfind(".") + 1:]
+    return ext == shared_library_ext
+
 def _llvm_get_rule_name(
         prefix_dict,
         name):
@@ -433,7 +488,8 @@ def _llvm_get_shared_library_rule(
         deps = [],
         ignore_prefix = False,
         nix_only = False,
-        win_only = False):
+        win_only = False,
+        directory = "lib"):
     """Returns a cc_library to include an LLVM shared library (or its interface
        library on Windows) with dependencies.
 
@@ -445,7 +501,8 @@ def _llvm_get_shared_library_rule(
         deps: names of cc_library targets this one depends on.
         ignore_prefix: if True, no lib prefix must be added on any host OS.
         nix_only: the library is available only on *nix systems.
-        win_only: the library is available only on Windows.):
+        win_only: the library is available only on Windows.
+        directory: where to search the llvm_library_file, 'lib' by default.
 
     Returns:
         cc_library target that defines the library.
@@ -457,7 +514,7 @@ def _llvm_get_shared_library_rule(
 
     library_prefix, library_ext = _import_library_file_params(repository_ctx)
     library_prefix = library_prefix if not ignore_prefix else ""
-    library_file = "lib/%s%s.%s" % (library_prefix, llvm_library_file, library_ext)
+    library_file = "%s/%s%s.%s" % (directory, library_prefix, llvm_library_file, library_ext)
     if repository_ctx.path(library_file).exists:
         llvm_library_rule = _cc_library(
             name = _llvm_get_rule_name(prefix_dict, name),
@@ -601,33 +658,34 @@ def _llvm_get_shared_lib_genrule(
         ")\n"
     )
 
-def _llvm_get_link_opts(repository_ctx):
-    """Returns a list of platform-provided dependencies.
-       The list should be used as a value of the 'linkopts'
-       rule parameter.
+def _llvm_get_linked_libraries(repository_ctx):
+    """Returns a tuple of two lists of dependencies: the first one is
+       the platform-provided dependencies and should be used as a value
+       of the 'linkopts' rule parameter while the second one is a
+       dictionary library_name:library_path - libraries the llvm installation
+       is linked against.
 
        Implementation notes: the method uses the
        "lib/cmake/llvm/LLVMExports.cmake" file and grabs the
        dependencies of the LLVMSupport library excluded all
-       started with LLVM or contains dot (so, being a real file).
+       started with LLVM. Windows platform-provided libraries
+       will be ignored.
 
     Args:
         repository_ctx: the repository_ctx object.
     Returns:
-        A list of platform-provided dependencies.
+        ([platform-provided libraries], {library_name : library_path})
     """
-
-    # No link opts on Windows
-    if _is_windows(repository_ctx):
-        return []
 
     # The algorithm is following: read the export file, read libraries
     # for llvm_support, remove started with LLVM, and convert them into
-    # an array of "-l<library>" positions.
+    # an array of "-l<library>" positions or put into dictionary.
+    skip_linkopts = _is_windows(repository_ctx) # no linkopts on Windows
+    ignored_libraries = ["shell32.dll", "ole32.dll"]
     exportpath = repository_ctx.path("lib/cmake/llvm/LLVMExports.cmake")
     if not exportpath.exists:
-        return []
-    config = repository_ctx.read("lib/cmake/llvm/LLVMExports.cmake")
+        return ([], dict())
+    config = repository_ctx.read(exportpath)
     libraries_line = ""
     lines = config.splitlines()
     for idx, line in enumerate(lines):
@@ -638,19 +696,26 @@ def _llvm_get_link_opts(repository_ctx):
             break
 
     if len(libraries_line) == 0:
-        return []
+        return ([], dict())
     start = libraries_line.find('"')
     end = libraries_line.find('"', start + 1)
     libraries_line = libraries_line[start + 1:end]
-    libs = []
+    linkopts = []
+    deps = dict()
     for lib in libraries_line.split(";"):
         if lib.startswith("LLVM"): # if LLVM<smth> this is a dependency, no linkopt
             continue
         if lib.find(".") > -1: # there is an extension, so it is no linkopt
+            if _is_ignored(lib, ignored_libraries):
+                continue
+            library_name = lib[lib.rfind("/") + 1:]
+            library_name = library_name[:library_name.find(".")]
+            deps[library_name] = lib
             continue
-        libs.append("-l" + lib if not lib.startswith("-l") else lib)
+        if not skip_linkopts:
+            linkopts.append("-l" + lib if not lib.startswith("-l") else lib)
 
-    return libs
+    return (linkopts, deps)
 
 def _llvm_get_target_list(repository_ctx):
     """Returns a list of supported targets.
@@ -740,73 +805,29 @@ def _llvm_get_install_path(repository_ctx):
         ]))
     return llvm_install_path
 
-def _enable_local_z3(repository_ctx):
-    """Returns whether the Z3 Solver is enabled. The solver is
-       enabled if the _Z3_INSTALL_PREFIX environment variable
-       is defined.
+def _llvm_symlink_dependencies(repository_ctx):
+    """Symlinks dependencies for LLVM and returns a tuple with
+       a list of flags for the 'linkopt' parameter and a dictionary
+       in the form of ('library name', 'is this is a shared library')
+       for the required LLVM dependencies (can be used to form the 'deps'
+       attribute). Fails if any dependency is not found on the host.
 
     Args:
         repository_ctx: the repository_ctx object.
     Returns:
-        True if the Z3 Solver is enabled.
+        ([platform-provided libraries], {library_name : True if shared})
+        Fails id any dependency is not found on the host.
     """
+    llvm_linkopts, llvm_deps = _llvm_get_linked_libraries(repository_ctx)
+    llvm_dep_types = dict()
+    for dep_lib_name, dep_lib_path in llvm_deps.items():
+        linked = _symlink_library(repository_ctx, dep_lib_path, dep_lib_name)
+        if not linked:
+            _fail("The path to a required dependency '%s' is not found." % dep_lib_path)
+        llvm_dep_types[dep_lib_name] = _is_shared_library(repository_ctx,
+            dep_lib_path)
+    return (llvm_linkopts, llvm_dep_types)
 
-    return _Z3_INSTALL_PREFIX in repository_ctx.os.environ
-
-def _z3_symlink_library(
-        repository_ctx,
-        z3_path,
-        subfolder,
-        library_file,
-        target):
-    """Symlink the Z3 Solver's static library into the bazel building directory.
-
-    Args:
-        repository_ctx: the repository_ctx object.
-        z3_path: full path to the Z3 Solver's installation.
-        subfolder: where to search for the 'library_file'.
-        library_file: the name of the Z3 library file.
-        target: the symlink target.
-    Returns:
-        True if the Z3 librart is found in the subfolder or False otherwise.
-    """
-
-    library_file_path = "%s/%s/%s" % (z3_path, subfolder, library_file)
-    if repository_ctx.path(library_file_path).exists:
-        repository_ctx.symlink(library_file_path, target)
-        return True
-    else:
-        return False
-
-def _z3_get_libraries(repository_ctx, z3_path):
-    """Symlink the Z3 Solver's libraries into the bazel building directory.
-
-    Args:
-        repository_ctx: the repository_ctx object.
-        z3_path: full path to the Z3 Solver's installation.
-    """
-
-    _, library_ext = _static_library_file_params(repository_ctx)
-    static_library = "libz3.%s" % library_ext
-    target = "z3/lib/%s" % static_library # Notice! even if libz3 is a shared library,
-                                          # the symlink will have extension .a
-    if not _is_windows(repository_ctx):
-        _, library_ext = _import_library_file_params(repository_ctx)
-        import_library = "libz3.%s" % library_ext
-        variants = [("lib64", static_library),
-                    ("lib64", import_library),
-                    ("lib", static_library),
-                    ("lib", import_library),
-                    ("bin", static_library),
-                    ("bin", import_library),
-                   ]
-    else:
-        variants = [("lib", static_library),
-                    ("bin", static_library),
-                   ]
-    for folder, library_file in variants:
-        if _z3_symlink_library(repository_ctx, z3_path, folder, library_file, target):
-            return
 
 def _llvm_installed_impl(repository_ctx):
     # dictionary of prefixes, all targets will be named prefix_dictionary["llvm"]<target>
@@ -850,14 +871,8 @@ def _llvm_installed_impl(repository_ctx):
         output = "./LICENSE.TXT",
         sha256 = _LLVM_LICENSE_FILE_SHA256)
 
-    if _enable_local_z3(repository_ctx):
-        z3_path = repository_ctx.os.environ[_Z3_INSTALL_PREFIX]
-        _z3_get_libraries(repository_ctx, z3_path)
-    else:
-        _warn("Z3 Solver is not enabled.",
-            " ".join(["To enable the solver, set the environment variable",
-             "'%s' to the full path of the solver's local installation." % _Z3_INSTALL_PREFIX,
-            ]))
+    # Symlink LLVM dependencies
+    llvm_linkopts, llvm_deps = _llvm_symlink_dependencies(repository_ctx)
 
     supported_targets = _llvm_get_target_list(repository_ctx)
     ctx = repository_ctx
@@ -1415,10 +1430,9 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_SUPPORT_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_support",
                 "LLVMSupport",
-                ["llvm_demangle"] +
-                  (["llvm_headers"] if add_hdrs else []) +
-                  (["z3_solver"] if _enable_local_z3(ctx) else []),
-                _llvm_get_link_opts(ctx)),
+                ["llvm_demangle"] + (["llvm_headers"] if add_hdrs else [])
+                    + llvm_deps.keys(),
+                llvm_linkopts),
         "%{LLVM_SYMBOLIZE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_symbolize",
                 "LLVMSymbolize",
@@ -1869,9 +1883,13 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_CONFIG_LIB}":
             _llvm_get_config_library_rule(ctx, prx, "llvm_config_headers",
                 "llvm_config_files", "generated/include"),
-        "%{Z3_SOLVER_LIB}":
-            _llvm_get_library_rule(ctx, prx, "z3_solver", "libz3",
-                ignore_prefix = True, directory = "z3/lib"),
+        "%{DEP_LIBS}":
+            "\n".join([_llvm_get_shared_library_rule(ctx, prx, dep_name, dep_name,
+                            ignore_prefix = True, directory = dep_name)
+                       if dep_shared else
+                       _llvm_get_library_rule(ctx, prx, dep_name, dep_name,
+                            ignore_prefix = True, directory = dep_name)
+                for dep_name, dep_shared in llvm_deps.items()]),
     })
 
     _tpl(repository_ctx, "llvm_config.bzl", {
@@ -1893,6 +1911,5 @@ llvm_configure = repository_rule(
     },
     environ = [
         _LLVM_INSTALL_PREFIX,
-        _Z3_INSTALL_PREFIX,
     ],
 )
