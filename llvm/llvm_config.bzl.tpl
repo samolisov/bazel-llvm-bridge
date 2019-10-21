@@ -9,6 +9,16 @@ llvm_win_copts is a convenient set of platform-dependent compiler options
 to enable the building process of LLVM-dependent targets for Windows platform.
 It can disable RTTI and enable the right level of C++.
 
+llvm_cxx_copts is a convenient set of "libc++" specific compiler options.
+May be used to enable "libc++" as a standard library for the build.
+
+llvm_cxx_linked is a flag that displays if LLVM is linked against the "libc++"
+standard library.
+
+if_cxx_linked is a conditional to check if the LLVM installation
+is built against the "libc++" standard library. If so, the first argument
+will be returned, otherwise the second one.
+
 llvm_targets is a list of supported targets ("AArch64", "ARM", "X86", etc.)
 
 if_has_<TARGET> is a conditional to check if we are building with the target
@@ -27,6 +37,15 @@ llvm_win_copts = [
 llvm_targets = [
 %{LLVM_TARGETS}
 ]
+
+llvm_cxx_linked = %{LLVM_CXX_LINKED}
+
+llvm_cxx_copts = [
+    %{LLVM_CXX_COPT}
+]
+
+def if_cxx_linked(if_true, if_false = []):
+    return if_true if llvm_cxx_linked else if_false
 
 def if_has_aarch64(if_true, if_false = []):
     return if_true if "AArch64" in llvm_targets else if_false
