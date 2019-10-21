@@ -368,10 +368,9 @@ def _llvm_get_rule_name(
         'prefix_dict'.
     """
     concat_format = "%s%s"
-    if name.startswith("llvm_"):
-        return concat_format % (prefix_dict["llvm"], name[len("llvm_"):])
-    if name.startswith("clang_"):
-        return concat_format % (prefix_dict["clang"], name[len("clang_"):])
+    for old_prefix, new_prefix in prefix_dict.items():
+        if name.startswith(old_prefix):
+            return concat_format % (new_prefix, name[len(old_prefix) + 1:])
     return name
 
 def _llvm_get_rule_names(
@@ -782,6 +781,29 @@ def _llvm_local_enabled(repository_ctx):
         ]))
     return enabled
 
+def _llvm_is_linked_against_cxx(repository_ctx, directory = "lib"):
+    """Returns whether the LLVM installation is linked against the libc++
+       standard library.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        directory: where to search the libc++ files, 'lib' by default.
+    Returns:
+        True if any of the libc++ binaries presents in the
+        local LLVM installation, False otherwise.
+    """
+    library_files_params = [
+        _static_library_file_params(repository_ctx),
+        _import_library_file_params(repository_ctx)
+    ]
+
+    for library_prefix, library_ext in library_files_params:
+        libcxx_file = "%s/%s%s.%s" % (directory, library_prefix, "c++", library_ext)
+        if repository_ctx.path(libcxx_file).exists:
+            return True
+
+    return False
+
 def _llvm_get_install_path(repository_ctx):
     """Returns a path to a local LLVM installation passed in
        the '_LLVM_INSTALL_PREFIX' environment variable.
@@ -835,6 +857,7 @@ def _llvm_installed_impl(repository_ctx):
     prefix_dictionary = {
         "llvm": repository_ctx.attr.llvm_prefix,
         "clang": repository_ctx.attr.clang_prefix,
+        "libcxx": repository_ctx.attr.libcxx_prefix,
     }
     # if there are duplicated prefixes, fail.
     _llvm_check_duplicated_prefixes(prefix_dictionary)
@@ -1883,6 +1906,23 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_CONFIG_LIB}":
             _llvm_get_config_library_rule(ctx, prx, "llvm_config_headers",
                 "llvm_config_files", "generated/include"),
+
+        "%{LIBCXX_STATIC_LIB}":
+            _llvm_get_library_rule(ctx, prx, "libcxx_static", "c++"),
+        "%{LIBCXX_SHARED_LIB}":
+            _llvm_get_shared_library_rule(ctx, prx, "libcxx_shared", "c++"),
+        "%{LIBCXX_SHARED_COPY_GENRULE}":
+            _llvm_get_shared_lib_genrule(ctx, prx, "libcxx_copy_shared",
+                llvm_path, "c++"),
+        "%{LIBCXX_ABI_STATIC_LIB}":
+            _llvm_get_library_rule(ctx, prx, "libcxx_abi_static", "c++abi"),
+        "%{LIBCXX_ABI_SHARED_LIB}":
+            _llvm_get_shared_library_rule(ctx, prx, "libcxx_abi_shared",
+                "c++abi"),
+        "%{LIBCXX_ABI_SHARED_COPY_GENRULE}":
+            _llvm_get_shared_lib_genrule(ctx, prx, "libcxx_copy_abi_shared",
+                llvm_path, "c++abi"),
+
         "%{DEP_LIBS}":
             "\n".join([_llvm_get_shared_library_rule(ctx, prx, dep_name, dep_name,
                             ignore_prefix = True, directory = dep_name)
@@ -1895,6 +1935,9 @@ def _llvm_installed_impl(repository_ctx):
     _tpl(repository_ctx, "llvm_config.bzl", {
         "%{LLVM_TARGETS}": _llvm_get_formatted_target_list(repository_ctx,
             supported_targets),
+        "%{LLVM_CXX_LINKED}": str(_llvm_is_linked_against_cxx(repository_ctx)),
+        "%{LLVM_CXX_COPT}": "\"-stdlib=libc++\"" if _llvm_is_linked_against_cxx(
+            repository_ctx) else "",
     })
 
 llvm_configure = repository_rule(
@@ -1907,6 +1950,7 @@ llvm_configure = repository_rule(
         "strip_prefix": attr.string(default = ""),
         "llvm_prefix": attr.string(default = "llvm_"),
         "clang_prefix": attr.string(default = "clang_"),
+        "libcxx_prefix": attr.string(default = "libcxx_"),
         "add_headers_to_deps": attr.bool(default = True),
     },
     environ = [
