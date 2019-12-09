@@ -1354,6 +1354,10 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "llvm_mca",
                 "LLVMMCA",
                 ["llvm_mc", "llvm_support"]),
+        "%{LLVM_MCDISASSEMBLER_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_mc_disassembler",
+                "LLVMMCDisassembler",
+                ["llvm_mc", "llvm_support"]),
         "%{LLVM_MCJIT_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_mcjit",
                 "LLVMMCJIT",
@@ -1362,10 +1366,6 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_MCPARSER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_mc_parser",
                 "LLVMMCParser",
-                ["llvm_mc", "llvm_support"]),
-        "%{LLVM_MCDISASSEMBLER_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_mc_disassembler",
-                "LLVMMCDisassembler",
                 ["llvm_mc", "llvm_support"]),
         "%{LLVM_MIRPARSER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_mir_parser",
