@@ -678,7 +678,7 @@ def _llvm_get_linked_libraries(repository_ctx):
 
     # The algorithm is following: read the export file, read libraries
     # for llvm_support, remove started with LLVM, and convert them into
-    # an array of "-l<library>" positions or put into dictionary.
+    # an array of "-l<library>" positions or put into the dictionary.
     skip_linkopts = _is_windows(repository_ctx) # no linkopts on Windows
     ignored_libraries = ["shell32.dll", "ole32.dll"]
     exportpath = repository_ctx.path("lib/cmake/llvm/LLVMExports.cmake")
@@ -715,6 +715,59 @@ def _llvm_get_linked_libraries(repository_ctx):
             linkopts.append("-l" + lib if not lib.startswith("-l") else lib)
 
     return (linkopts, deps)
+
+def _llvm_get_debug_linked_libraries(repository_ctx):
+    """Returns a list of dependencies in the form of a dictionary
+       library_name:library_path - debug specific libraries the
+       llvm installation is linked against.
+
+       The function works on Windows only.
+
+       Implementation notes: the method uses the
+       "lib/cmake/llvm/LLVMExports.cmake" file and grabs the
+       dependencies of the LLVMDebugInfoPDB library excluded all
+       started with LLVM.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+    Returns:
+        {library_name : library_path}
+    """
+    if not _is_windows(repository_ctx):
+        return dict()
+
+    # The algorithm is following: read the export file, read libraries
+    # for LLVMDebugInfoPDB, remove started with LLVM, and put them
+    # into the dictionary.
+    exportpath = repository_ctx.path("lib/cmake/llvm/LLVMExports.cmake")
+    if not exportpath.exists:
+        return dict()
+    config = repository_ctx.read(exportpath)
+    libraries_line = ""
+    lines = config.splitlines()
+    for idx, line in enumerate(lines):
+        # looking for dependencies for LLVMSupport
+        if line.startswith("set_target_properties(LLVMDebugInfoPDB"):
+            if idx + 1 < len(lines):
+                libraries_line = lines[idx + 1]
+            break
+
+    if len(libraries_line) == 0:
+        return dict()
+    start = libraries_line.find('"')
+    end = libraries_line.find('"', start + 1)
+    libraries_line = libraries_line[start + 1:end]
+    deps = dict()
+    for lib in libraries_line.split(";"):
+        if lib.startswith("LLVM"): # if LLVM<smth> this is a dependency, no linkopt
+            continue
+        if lib.find(".") > -1: # there is an extension
+            library_name = lib[lib.rfind("/") + 1:]
+            library_name = library_name[:library_name.find(".")]
+            deps[library_name] = lib
+            continue
+
+    return deps
 
 def _llvm_get_target_list(repository_ctx):
     """Returns a list of supported targets.
@@ -850,6 +903,26 @@ def _llvm_symlink_dependencies(repository_ctx):
             dep_lib_path)
     return (llvm_linkopts, llvm_dep_types)
 
+def _llvm_symlink_debug_dependencies(repository_ctx):
+    """Symlinks debug specific dependencies for LLVM and returns
+       a list of ('library name') for the required debug specific
+       LLVM dependencies (e.g. DIA SDK on Windows). Fails if any
+       dependency is not found on the host.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+    Returns:
+        list of library names.
+        Fails id any dependency is not found on the host.
+    """
+    llvm_debug_deps = _llvm_get_debug_linked_libraries(repository_ctx)
+    llvm_debug_dep_list = []
+    for dep_lib_name, dep_lib_path in llvm_debug_deps.items():
+        linked = _symlink_library(repository_ctx, dep_lib_path, dep_lib_name)
+        if not linked:
+            _fail("The path to a required dependency '%s' is not found." % dep_lib_path)
+        llvm_debug_dep_list.append(dep_lib_name)
+    return llvm_debug_dep_list
 
 def _llvm_installed_impl(repository_ctx):
     # dictionary of prefixes, all targets will be named prefix_dictionary["llvm"]<target>
@@ -896,6 +969,9 @@ def _llvm_installed_impl(repository_ctx):
 
     # Symlink LLVM dependencies
     llvm_linkopts, llvm_deps = _llvm_symlink_dependencies(repository_ctx)
+
+    # Symlink debug specific dependencies
+    llvm_debug_deps = _llvm_symlink_debug_dependencies(repository_ctx)
 
     supported_targets = _llvm_get_target_list(repository_ctx)
     ctx = repository_ctx
@@ -1302,7 +1378,7 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "llvm_debug_info_pdb",
                 "LLVMDebugInfoPDB",
                 ["llvm_debug_info_code_view", "llvm_debug_info_msf",
-                 "llvm_object", "llvm_support"]),
+                 "llvm_object", "llvm_support"] + llvm_debug_deps),
         "%{LLVM_DEMANGLE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_demangle",
                 "LLVMDemangle"),
@@ -1949,6 +2025,11 @@ def _llvm_installed_impl(repository_ctx):
         "%{LIBCXX_ABI_SHARED_COPY_GENRULE}":
             _llvm_get_shared_lib_genrule(ctx, prx, "libcxx_copy_abi_shared",
                 llvm_path, "c++abi"),
+
+        "%{DEBUG_DEP_LIBS}":
+            "\n".join([_llvm_get_library_rule(ctx, prx, dep_name, dep_name,
+                            ignore_prefix = True, directory = dep_name)
+                for dep_name in llvm_debug_deps]),
 
         "%{DEP_LIBS}":
             "\n".join([_llvm_get_shared_library_rule(ctx, prx, dep_name, dep_name,
