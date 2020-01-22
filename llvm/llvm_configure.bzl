@@ -1517,7 +1517,8 @@ def _llvm_installed_impl(repository_ctx):
        "%{LLVM_ORCJIT_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_orc_jit",
                 "LLVMOrcJIT",
-                ["llvm_core", "llvm_execution_engine", "llvm_jit_link",
+                ["llvm_analysis", "llvm_bit_reader", "llvm_bit_writer",
+                 "llvm_core", "llvm_execution_engine", "llvm_jit_link",
                  "llvm_mc", "llvm_object", "llvm_orc_error",
                  "llvm_passes", "llvm_runtime_dyld", "llvm_support",
                  "llvm_target", "llvm_transform_utils"]),
