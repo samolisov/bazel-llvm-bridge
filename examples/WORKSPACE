@@ -16,6 +16,7 @@ llvm_configure(
     llvm_prefix = "",            # default value: llvm_
     clang_prefix = "cl_",        # default value: clang_
     libcxx_prefix = "cxx_",      # default value: libcxx_
+    mlir_prefix = "ml_",         # default value: mlir_
     add_headers_to_deps = False, # default value: True
 
     # Either the LLVM_INSTALL_PREFIX environment variable must point to
