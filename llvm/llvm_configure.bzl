@@ -2152,7 +2152,7 @@ def _llvm_installed_impl(repository_ctx):
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_MLIROPT_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_mlir_opt",
-                "MLIRMLIROptLib",
+                "MLIRMlirOptLib",
                 ["mlir_analysis", "mlir_llvm_ir", "mlir_parser",
                  "mlir_pass", "mlir_transforms", "mlir_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
