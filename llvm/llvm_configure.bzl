@@ -558,17 +558,17 @@ def _llvm_get_config_genrule(
     config_file_path = config_file_dir + '/' + config_file_name
     command = ("echo '/* This generated file is for internal use. " +
         "Do not include it from headers. */\n" +
-        "#ifdef LLVM_CONFIG_H\n" +
+        "#ifdef LLVM_BRIDGE_CONFIG_H\n" +
         "#error " + config_file_name + " can only be included once\n" +
         "#else\n" +
-        "#define LLVM_CONFIG_H\n" +
+        "#define LLVM_BRIDGE_CONFIG_H\n" +
         "#define LLVM_INCLUDE_DIR \"" + llvm_include_dir + "\"\n" +
         "#define LLVM_INCLUDE_COMMAND_ARG \"-I" + llvm_include_dir + "\"\n" +
         "#define LLVM_LIBRARY_DIR \"" + llvm_library_dir + "\"\n" +
         ("#define CLANG_LIB_INCLUDE_DIR \"" + clang_include_dir + "\"\n" +
          "#define CLANG_LIB_INCLUDE_COMMAND_ARG \"-I" + clang_include_dir + "\"\n"
          if clang_exists else "") +
-        "#endif /* LLVM_CONFIG_H */\n' > $@")
+        "#endif /* LLVM_BRIDGE_CONFIG_H */\n' > $@")
 
     return (
         "genrule(\n" +
