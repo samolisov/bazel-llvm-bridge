@@ -268,12 +268,12 @@ genrule(
         "@local_llvm//:cl_copy_libclang_cpp",
     ],
     outs = [
-        "libclang.so.10git",
-        "libclang-cpp.so.10git",
+        "libclang.so.11git",
+        "libclang-cpp.so.11git",
     ],
     cmd = """
-        cp -f $(location @local_llvm//:cl_copy_libclang) $(@D)/libclang.so.10git
-        cp -f $(location @local_llvm//:cl_copy_libclang_cpp) $(@D)/libclang-cpp.so.10git
+        cp -f $(location @local_llvm//:cl_copy_libclang) $(@D)/libclang.so.11git
+        cp -f $(location @local_llvm//:cl_copy_libclang_cpp) $(@D)/libclang-cpp.so.11git
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
