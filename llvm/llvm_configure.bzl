@@ -124,6 +124,22 @@ def _static_library_file_params(repository_ctx):
     # TODO add a check for MacOS X
     return ("", "lib") if _is_windows(repository_ctx) else ("lib", "a")
 
+
+def _executable_file_params(repository_ctx):
+    """Returns a tuple with platform-dependent parameters of
+       an executable file.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+
+    Returns:
+        A tuple in the following format:
+        - extension
+    """
+
+    # TODO add a check for MacOS X
+    return (".exe") if _is_windows(repository_ctx) else ("")
+
 def _import_library_file_params(repository_ctx):
     """Returns a tuple with platform-dependent parameters of
        an import library. While on *Nix, an *.so file is an import
@@ -657,6 +673,38 @@ def _llvm_get_shared_lib_genrule(
         ")\n"
     )
 
+def _llvm_get_executable_file_rule(
+        repository_ctx,
+        prefix_dict,
+        name,
+        llvm_executable_file,
+        directory = "bin"):
+    """Returns a 'filegroup' to make a reference to an executable file
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        prefix_dict: the dictionary of library name prefixes.
+        name: rule name.
+        llvm_executable_file: an LLVM executable file name without extension.
+        directory: where to search the llvm_executable_file, 'bin' by default.
+    Returns:
+        filegroup target that defines a reference to the executable file
+    """
+    ext = _executable_file_params(repository_ctx)
+    exec_file = "%s/%s%s" % (directory, llvm_executable_file, ext)
+    if repository_ctx.path(exec_file).exists:
+        return (
+            "filegroup(\n" +
+            '    name = "' +
+                 _llvm_get_rule_name(prefix_dict, name) + '",\n' +
+            "    srcs = [\n" +
+            '        "' + exec_file + '",' +
+            "\n    ],\n" +
+            ")\n"
+        )
+    else:
+        return "# file '%s' is not found.\n" % exec_file
+
 def _llvm_get_linked_libraries(repository_ctx):
     """Returns a tuple of two lists of dependencies: the first one is
        the platform-provided dependencies and should be usied as a value
@@ -924,6 +972,37 @@ def _llvm_symlink_debug_dependencies(repository_ctx):
         llvm_debug_dep_list.append(dep_lib_name)
     return llvm_debug_dep_list
 
+def _llvm_symlink_tablegens(repository_ctx, llvm_path):
+    """Symlinks tablegen executable files for LLVM and MLIR.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        llvm_path: path to the local LLVM installation
+    """
+    executable_ext = _executable_file_params(repository_ctx)
+    tablegens = [
+        "llvm-tblgen%s" % executable_ext,
+        "mlir-tblgen%s" % executable_ext
+    ]
+
+    for tablegen in tablegens:
+        tablegen_path = repository_ctx.path("%s/bin/%s" % (llvm_path, tablegen))
+        if tablegen_path.exists:
+            repository_ctx.symlink(tablegen_path, "bin/%s" % tablegen)
+
+def _llvm_if_tablegen(repository_ctx, prefix):
+    """Checks if an executable file with name '<prefix>-tblgen'(.exe if Windows)
+       exists in the 'bin' subdirectory.
+
+    Args:
+        repository_ctx: the repository_ctx object.
+        prefix: the prefix to check a file '<prefix>-tblgen'
+    Returns:
+        True if the file exists, False otherwise.
+    """
+    executable_ext = _executable_file_params(repository_ctx)
+    return repository_ctx.path("bin/%s-tblgen%s" % (prefix, executable_ext)).exists
+
 def _llvm_installed_impl(repository_ctx):
     # dictionary of prefixes, all targets will be named prefix_dictionary["llvm"]<target>
     # for LLVM, prefix_dictionary["clang"]<target> for clang, etc.
@@ -941,6 +1020,7 @@ def _llvm_installed_impl(repository_ctx):
         llvm_path = _llvm_get_install_path(repository_ctx)
         repository_ctx.symlink("%s/include" % llvm_path, "include")
         repository_ctx.symlink("%s/lib" % llvm_path, "lib")
+        _llvm_symlink_tablegens(repository_ctx, llvm_path)
     else:
         # setup remote LLVM repository.
         repository_ctx.download_and_extract(
@@ -1572,6 +1652,9 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "llvm_tablegen",
                 "LLVMTableGen",
                 ["llvm_support"]),
+        "%{LLVM_TABLEGEN_TOOL}":
+            _llvm_get_executable_file_rule(ctx, prx, "llvm_tablegen_tool",
+                "llvm-tblgen"),
         "%{LLVM_TARGET_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_target",
                 "LLVMTarget",
@@ -2259,6 +2342,9 @@ def _llvm_installed_impl(repository_ctx):
                 "LLVMMLIRTableGen",
                 ["llvm_support", "llvm_tablegen"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
+        "%{MLIR_TABLEGEN_TOOL}":
+            _llvm_get_executable_file_rule(ctx, prx, "mlir_tablegen_tool",
+                "mlir-tblgen"),
         "%{MLIR_TARGETLLVMIR_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_target_llvm_ir",
                 "MLIRTargetLLVMIR",
@@ -2363,6 +2449,20 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_CXX_COPT}": "\"-stdlib=libc++\"" if _llvm_is_linked_against_cxx(
             repository_ctx) else "",
     })
+
+    if _llvm_if_tablegen(repository_ctx, "llvm"):
+        _tpl(repository_ctx, "llvm_tablegen.bzl", {
+            "%{NAME}": "LLVM",
+            "%{PREFIX}": prefix_dictionary["llvm"],
+        },
+        "llvm_tablegen.bzl")
+
+    if _llvm_if_tablegen(repository_ctx, "mlir"):
+        _tpl(repository_ctx, "llvm_tablegen.bzl", {
+            "%{NAME}": "MLIR",
+            "%{PREFIX}": prefix_dictionary["mlir"],
+        },
+        "mlir_tablegen.bzl")
 
 llvm_configure = repository_rule(
     implementation = _llvm_installed_impl,
