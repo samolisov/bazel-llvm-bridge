@@ -50,6 +50,8 @@ load("@local_llvm//:llvm_config.bzl",
     "if_has_x86",
     "if_has_x_core")
 
+load("@local_llvm//:llvm_tablegen.bzl", "tablegen")
+
 llvm_copts = select({
     ":linux_x86_64": llvm_nix_copts + llvm_cxx_copts,
     ":macos_x86_64": llvm_nix_copts + llvm_cxx_copts,
@@ -198,6 +200,44 @@ cc_binary(
         "@local_llvm//:cxx_shared",
         "@local_llvm//:cxx_abi_shared",
     ]),
+)
+
+# Example: print physical registers for an imaginary custom target.
+# This example demonstrates how to use llvm-tablegen as a dependency.
+# Usage: llvm_print_physical_registers
+cc_binary(
+    name = 'llvm_print_physical_registers',
+    srcs = [
+        "llvm/target/custom_frame_lowering.h",
+        "llvm/target/custom_register_info.h",
+        "llvm/target/custom_frame_lowering.cc",
+        "llvm/target/custom_mc_target_desc.cc",
+        "llvm/target/custom_register_info.cc",
+        "llvm/llvm_print_physical_registers.cc",
+    ],
+    copts = llvm_copts,
+    deps = [
+        "@local_llvm//:headers",
+        "@local_llvm//:code_gen",
+        "@local_llvm//:support",
+        ":tablegen_registers",
+    ] + if_cxx_linked([
+        "@local_llvm//:cxx_shared",
+        "@local_llvm//:cxx_abi_shared",
+    ]),
+    visibility = ["//visibility:private"],
+)
+
+tablegen(
+    name = "tablegen_registers",
+    srcs = [
+        "llvm/target/custom_register_class.td",
+    ],
+    src = "llvm/target/custom_register_info.td",
+    out = "target/custom_register_info.inc",
+    opts = ["-gen-register-info"],
+    deps = ["@local_llvm//:headers"],
+    visibility = ["//visibility:private"],
 )
 
 cc_binary(
