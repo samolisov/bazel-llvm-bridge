@@ -247,6 +247,56 @@ cc_binary(
 )
 ```
 
+### How to deal with tablegen
+
+LLVM and Clang are very intensive users of the [tablegen](https://llvm.org/docs/TableGen/) tool.
+Fortunately, **bazel-llvm-bridge** provides a rule to run the tablegen
+tools for LLVM (`llvm-tblgen`). The rule are defined in the `llvm_tablegen.bzl` file.
+
+To run the tablegen tool, the user should define one or more targets based on the `<prefix>_tablegen`
+rule in a BUILD file. The targets can be used by any other `cc_` ones as dependencies and also
+can depend on any `cc_library` (the tablegen tool will use includes and headers provided by such
+libraries). For example:
+
+```bzl
+load("@local_llvm//:llvm_tablegen.bzl", "tablegen")
+
+cc_binary(
+    name = 'llvm_print_physical_registers',
+    ...
+    deps = [
+        ...
+        ":tablegen_registers",
+    ],
+    visibility = ["//visibility:private"],
+)
+
+tablegen(
+    name = "tablegen_registers",
+    srcs = [
+        "llvm/target/custom_register_class.td",
+    ],
+    src = "llvm/target/custom_register_info.td",
+    out = "target/custom_register_info.inc",
+    opts = ["-gen-register-info"],
+    deps = ["@local_llvm//:headers"],
+    visibility = ["//visibility:private"],
+)
+```
+
+Notice: a target should be defined for every tablegen invocation.
+
+The `<prefix>_tablegen` rule has the following attributes:
+ * name - the target's name.
+ * src - the tablegen (.td) file to be the input of the tablegen tool.
+ * srcs - the tablegen and other files used by the 'src' file. This attribute may be
+   required for sandboxing.
+ * out - the generated file's name. Can be prefixed with any number of folders
+   (for example, `target/custom_register_info.inc`).
+ * opts - command line options for the tablegen tool.
+ * deps - the list of libraries that provide includes for the .td file.
+ * includes - the list of include dirs to be added to the command line.
+
 ### How to deal with Clang/LLVM shared libraries
 
 Important note for users of the `libclang`, `libclang-cpp` and `LLVM-C` shared
