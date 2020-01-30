@@ -59,6 +59,10 @@ llvm_copts = select({
     "//conditions:default": [],
 })
 
+# Example: taking the bit_reader library as well as LLVM's headers into
+# account. The 'llvm_bb_counter' application returns how many basic blocks
+# has every function in a bit code file.
+# Usage: llvm_bb_counter <path to a .bc file>
 cc_binary(
     name = 'llvm_bb_counter',
     srcs = [
@@ -75,6 +79,11 @@ cc_binary(
     visibility = ["//visibility:private"],
 )
 
+# Example: taking the core library as well as LLVM's headers into
+# account. Some custom IR passes are combined into a static library.
+# The 'alwayslink' flag is required to demonstrate how dependencies
+# are used. Without the flag, symbols not used by an application
+# linked against will just be ignored.
 cc_library(
     name = "llvm_exp_passes",
     srcs = [
@@ -90,6 +99,10 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+# Example: an application is just developed to be linked against the
+# 'llvm_exp_passes' static library. The application does nothing but
+# all dependencies must be satisfied to let the application be linked.
+# Usage: llvm_exp_passes_linked
 cc_binary(
     name = "llvm_exp_passes_linked",
     srcs = [
@@ -104,6 +117,11 @@ cc_binary(
     visibility = ["//visibility:private"],
 )
 
+# Example: taking supported by the local installation of LLVM targets into
+# account. The example uses many provided 'if_has_<TARGET>' functions to
+# define required compiler flags and be linked against required target
+# libraries.
+# Usage: llvm_print_supported_targets
 cc_binary(
     name = "llvm_print_supported_targets",
     srcs = [
@@ -228,6 +246,8 @@ cc_binary(
     visibility = ["//visibility:private"],
 )
 
+# Generates a custom_register_class.inc include using the llvm_tablegen
+# rule and llvm-tblgen tool.
 tablegen(
     name = "tablegen_registers",
     srcs = [
@@ -240,6 +260,13 @@ tablegen(
     visibility = ["//visibility:private"],
 )
 
+# Example: taking a platform specific libclang shared library
+# into account. The example uses automatically defined
+# 'copy_local_llvm_shared_<PLATFORM>' dependency to make a copy of the
+# libclang library in the 'bazel-bin' directory. On *nix platforms
+# the example linked so that to look for the library in the current directory.
+# The application reads function declaration and definition from a c/c++ code.
+# Usage: cd ./bazel-bin/ && ./clang_list_methods <path to a c/c++ code file>
 cc_binary(
     name = 'clang_list_methods',
     srcs = [
@@ -282,6 +309,8 @@ cc_binary(
     visibility = ["//visibility:private"],
 )
 
+# Copies the libclang and libclang_cpp shared libraries to the
+# 'bazel-bin' directory on Linux.
 genrule(
     name = "copy_local_llvm_shared_lin",
     srcs = [
@@ -297,6 +326,8 @@ genrule(
     visibility = ["//visibility:private"],
 )
 
+# Copies the libclang and libclang_cpp shared libraries to the
+# 'bazel-bin' directory on MacOS X.
 genrule(
     name = "copy_local_llvm_shared_mac",
     srcs = [
@@ -312,6 +343,8 @@ genrule(
     visibility = ["//visibility:private"],
 )
 
+# Copies the libclang and llvm-c shared libraries to the
+# 'bazel-bin' directory on Windows.
 genrule(
     name = "copy_local_llvm_shared_win",
     srcs = [
