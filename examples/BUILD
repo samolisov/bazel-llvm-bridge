@@ -238,6 +238,8 @@ cc_binary(
     visibility = ["//visibility:private"],
 )
 
+# Generates a custom_register_class.inc include using the llvm_tablegen
+# rule and llvm-tblgen tool.
 tablegen(
     name = "tablegen_registers",
     srcs = [
