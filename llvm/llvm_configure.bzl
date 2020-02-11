@@ -2172,9 +2172,9 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_nvptx_info"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_GPUTONVVMTRANSFORMS_LIB}":
-            _llvm_get_library_rule(ctx, prx, "mlir_gpu_to_nnvm_transforms",
+            _llvm_get_library_rule(ctx, prx, "mlir_gpu_to_nvvm_transforms",
                 "MLIRGPUtoNVVMTransforms",
-                ["mlir_gpu", "mlir_llvm_ir", "mlir_nnvm_ir", "mlir_pass",
+                ["mlir_gpu", "mlir_llvm_ir", "mlir_nvvm_ir", "mlir_pass",
                  "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_GPUTOROCDLTRANSFORMS_LIB}":
