@@ -301,6 +301,114 @@ cc_binary(
     visibility = ["//visibility:private"],
 )
 
+# Example: do nothing, just link a cc-file with all the MLIR libraries.
+# This example checks the dependency chain for each library.
+# Usage: mlir_check_dependencies
+cc_binary(
+    name = 'mlir_check_dependencies',
+    srcs = [
+        "mlir/mlir_empty_main.cc",
+    ],
+    copts = llvm_copts,
+    data = select({
+        ":linux_x86_64": [
+            "copy_mlir_runner_shared_lin",
+        ],
+        ":macos_x86_64": [
+            "copy_mlir_runner_shared_mac",
+        ],
+        ":windows_x86_64": [
+            "copy_mlir_runner_shared_win",
+        ],
+        "//conditions:default": [],
+    }),
+    deps = [
+        "@local_llvm//:headers",
+        "@local_llvm//:ml_headers",
+        "@local_llvm//:ml_affine_ops",
+        "@local_llvm//:ml_affine_to_standard",
+        "@local_llvm//:ml_all_dialects",
+        "@local_llvm//:ml_analysis",
+        "@local_llvm//:ml_dialect",
+        "@local_llvm//:ml_edsc",
+        "@local_llvm//:ml_edsc_interface",
+        "@local_llvm//:ml_execution_engine",
+        "@local_llvm//:ml_fxp_math_ops",
+        "@local_llvm//:ml_gpu",
+        "@local_llvm//:ml_gpu_to_cuda_transforms",
+        "@local_llvm//:ml_gpu_to_nvvm_transforms",
+        "@local_llvm//:ml_gpu_to_rocdl_transforms",
+        "@local_llvm//:ml_gpu_to_spirv_transforms",
+        "@local_llvm//:ml_ir",
+        "@local_llvm//:ml_jit_runner",
+        "@local_llvm//:ml_linalg_analysis",
+        "@local_llvm//:ml_linalg_edsc",
+        "@local_llvm//:ml_linalg_ops",
+        "@local_llvm//:ml_linalg_transforms",
+        "@local_llvm//:ml_linalg_utils",
+        "@local_llvm//:ml_linalg_to_llvm",
+        "@local_llvm//:ml_linalg_to_spirv_transforms",
+        "@local_llvm//:ml_llvm_ir",
+        "@local_llvm//:ml_loop_analysis",
+        "@local_llvm//:ml_loop_ops",
+        "@local_llvm//:ml_loops_to_gpu",
+        "@local_llvm//:ml_loop_to_standard",
+        "@local_llvm//:ml_mlir_opt_main",
+        "@local_llvm//:ml_nvvm_ir",
+        "@local_llvm//:ml_open_mp",
+        "@local_llvm//:ml_opt_lib",
+        "@local_llvm//:ml_parser",
+        "@local_llvm//:ml_pass",
+        "@local_llvm//:ml_quantizer_support",
+        "@local_llvm//:ml_quantizer_fxp_math_config",
+        "@local_llvm//:ml_quantizer_transforms",
+        "@local_llvm//:ml_quant_ops",
+        "@local_llvm//:ml_rocdl_ir",
+        "@local_llvm//:ml_runner_utils",
+        "@local_llvm//:ml_sdbm",
+        "@local_llvm//:ml_shape",
+        "@local_llvm//:ml_spirv",
+        "@local_llvm//:ml_spirv_serialization",
+        "@local_llvm//:ml_spirv_test_passes",
+        "@local_llvm//:ml_spirv_transforms",
+        "@local_llvm//:ml_standard_ops",
+        "@local_llvm//:ml_standard_to_llvm",
+        "@local_llvm//:ml_standard_to_spirv_transforms",
+        "@local_llvm//:ml_support",
+        "@local_llvm//:ml_tablegen",
+        "@local_llvm//:ml_target_llvm_ir",
+        "@local_llvm//:ml_target_llvm_ir_module_translation",
+        "@local_llvm//:ml_target_nvvm_ir",
+        "@local_llvm//:ml_target_rocdl_ir",
+        "@local_llvm//:ml_test_dialect",
+        "@local_llvm//:ml_test_ir",
+        "@local_llvm//:ml_test_pass",
+        "@local_llvm//:ml_test_transforms",
+        "@local_llvm//:ml_transforms",
+        "@local_llvm//:ml_transform_utils",
+        "@local_llvm//:ml_translate_cl_parser",
+        "@local_llvm//:ml_translation",
+        "@local_llvm//:ml_vector_ops",
+        "@local_llvm//:ml_vector_to_llvm",
+        "@local_llvm//:ml_vector_to_loops",
+    ] + if_cxx_linked([
+        "@local_llvm//:cxx_shared",
+        "@local_llvm//:cxx_abi_shared",
+    ]),
+    linkopts = select({
+        ":linux_x86_64": [
+            "-Wl,-R -Wl,."
+        ],
+        ":macos_x86_64": [
+            "-Wl,-R -Wl,."
+        ],
+        ":windows_x86_64": [
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:private"],
+)
+
 # Copies the libclang and libclang_cpp shared libraries to the
 # 'bazel-bin' directory on Linux.
 genrule(
@@ -356,6 +464,57 @@ genrule(
     cmd = """
         cp -f $(location @local_llvm//:cl_copy_libclang) $(@D)
         cp -f $(location @local_llvm//:copy_c) $(@D)
+    """,
+    output_to_bindir = 1,
+    visibility = ["//visibility:private"],
+)
+
+# Copies the mlir_runner_utils shared libraries to the
+# 'bazel-bin' directory on Linux.
+genrule(
+    name = "copy_mlir_runner_shared_lin",
+    srcs = [
+        "@local_llvm//:ml_copy_runner_utils",
+    ],
+    outs = [
+        "libmlir_runner_utils.so.11git",
+    ],
+    cmd = """
+        cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)/libmlir_runner_utils.so.11git
+    """,
+    output_to_bindir = 1,
+    visibility = ["//visibility:private"],
+)
+
+# Copies the mlir_runner_utils shared libraries to the
+# 'bazel-bin' directory on MacOS X.
+genrule(
+    name = "copy_mlir_runner_shared_mac",
+    srcs = [
+        "@local_llvm//:ml_copy_runner_utils",
+    ],
+    outs = [
+        "libmlir_runner_utils.dylib",
+    ],
+    cmd = """
+        cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)
+    """,
+    output_to_bindir = 1,
+    visibility = ["//visibility:private"],
+)
+
+# Copies the mlir_runner_utils shared libraries to the
+# 'bazel-bin' directory on Windows.
+genrule(
+    name = "copy_mlir_runner_shared_win",
+    srcs = [
+        "@local_llvm//:ml_copy_runner_utils",
+    ],
+    outs = [
+        "mlir_runner_utils.dll",
+    ],
+    cmd = """
+        cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
