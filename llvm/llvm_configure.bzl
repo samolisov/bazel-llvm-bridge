@@ -1091,7 +1091,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{CLANG_ASTMATCHERS_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_ast_matchers",
                 "clangASTMatchers",
-                ["clang_ast", "clang_basic", "llvm_support"] +
+                ["clang_ast", "clang_basic", "clang_lex", "llvm_support"] +
                   (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_BASIC_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_basic",
