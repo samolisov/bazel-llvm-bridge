@@ -301,6 +301,87 @@ cc_binary(
     visibility = ["//visibility:private"],
 )
 
+# Example: do nothing, just link a cc-file with all the Clang libraries.
+# This example checks the dependency chain for each library.
+# Usage: clang_check_dependencies
+cc_binary(
+    name = 'clang_check_dependencies',
+    srcs = [
+        "clang/clang_empty_main.cc",
+    ],
+    copts = llvm_copts,
+    data = select({
+        ":linux_x86_64": [
+            "copy_local_llvm_shared_lin",
+        ],
+        ":macos_x86_64": [
+            "copy_local_llvm_shared_mac",
+        ],
+        ":windows_x86_64": [
+            "copy_local_llvm_shared_win",
+        ],
+        "//conditions:default": [],
+    }),
+    deps = [
+        "@local_llvm//:config_headers",
+        "@local_llvm//:cl_headers",
+        "@local_llvm//:cl_analysis",
+        "@local_llvm//:cl_arc_migrate",
+        "@local_llvm//:cl_ast",
+        "@local_llvm//:cl_ast_matchers",
+        "@local_llvm//:cl_basic",
+        "@local_llvm//:cl_code_gen",
+        "@local_llvm//:cl_cross_tu",
+        "@local_llvm//:cl_dependency_scanning",
+        "@local_llvm//:cl_directory_watcher",
+        "@local_llvm//:cl_driver",
+        "@local_llvm//:cl_dynamic_ast_matchers",
+        "@local_llvm//:cl_edit",
+        "@local_llvm//:cl_format",
+        "@local_llvm//:cl_frontend",
+        "@local_llvm//:cl_frontend_tool",
+        "@local_llvm//:cl_handle_cxx",
+        "@local_llvm//:cl_handle_llvm",
+        "@local_llvm//:cl_index",
+        "@local_llvm//:cl_lex",
+        "@local_llvm//:cl_libclang",
+        "@local_llvm//:cl_parse",
+        "@local_llvm//:cl_rewrite",
+        "@local_llvm//:cl_rewrite_frontend",
+        "@local_llvm//:cl_sema",
+        "@local_llvm//:cl_serialization",
+        "@local_llvm//:cl_static_analyzer_checkers",
+        "@local_llvm//:cl_static_analyzer_core",
+        "@local_llvm//:cl_static_analyzer_frontend",
+        "@local_llvm//:cl_tooling",
+        "@local_llvm//:cl_tooling_ast_diff",
+        "@local_llvm//:cl_tooling_core",
+        "@local_llvm//:cl_tooling_inclusions",
+        "@local_llvm//:cl_tooling_refactoring",
+        "@local_llvm//:cl_tooling_syntax",
+        "@local_llvm//:cl_transformer",
+    ] + select({
+        ":linux_x86_64": ["@local_llvm//:cl_libclang_cpp"],
+        ":macos_x86_64": ["@local_llvm//:cl_libclang_cpp"],
+        "//conditions:default": [],
+    }) + if_cxx_linked([
+        "@local_llvm//:cxx_shared",
+        "@local_llvm//:cxx_abi_shared",
+    ]),
+    linkopts = select({
+        ":linux_x86_64": [
+            "-Wl,-R -Wl,."
+        ],
+        ":macos_x86_64": [
+            "-Wl,-R -Wl,."
+        ],
+        ":windows_x86_64": [
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:private"],
+)
+
 # Example: do nothing, just link a cc-file with all the MLIR libraries.
 # This example checks the dependency chain for each library.
 # Usage: mlir_check_dependencies
