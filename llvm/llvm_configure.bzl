@@ -1473,7 +1473,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_DWARFLINKER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_dwarf_linker",
                 "LLVMDWARFLinker",
-                ["llvm_asm_printer", "llvm_code_gen", "llvm_debug_infi_dwarf",
+                ["llvm_asm_printer", "llvm_code_gen", "llvm_debug_info_dwarf",
                  "llvm_mc", "llvm_object", "llvm_support"]),
         "%{LLVM_EXECUTION_ENGINE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_execution_engine",
@@ -1522,7 +1522,7 @@ def _llvm_installed_impl(repository_ctx):
                 ["llvm_aggressive_inst_combine", "llvm_analysis",
                  "llvm_bit_reader", "llvm_bit_writer", "llvm_core",
                  "llvm_frontend_open_mp", "llvm_ir_reader",
-                 "llvm_inst_combine","llvm_instrumentation",
+                 "llvm_inst_combine", "llvm_instrumentation",
                  "llvm_linker", "llvm_object", "llvm_profile_data",
                  "llvm_scalar", "llvm_support", "llvm_transform_utils",
                  "llvm_vectorize"]),
