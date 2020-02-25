@@ -1473,7 +1473,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_DWARFLINKER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_dwarf_linker",
                 "LLVMDWARFLinker",
-                ["llvm_asm_printer", "llvm_code_gen", "llvm_debug_infi_dwarf",
+                ["llvm_asm_printer", "llvm_code_gen", "llvm_debug_info_dwarf",
                  "llvm_mc", "llvm_object", "llvm_support"]),
         "%{LLVM_EXECUTION_ENGINE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_execution_engine",
