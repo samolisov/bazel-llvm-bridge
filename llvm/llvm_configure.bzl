@@ -1188,6 +1188,10 @@ def _llvm_installed_impl(repository_ctx):
                       "llvm_arm_desc", "llvm_arm_disassembler",
                       "llvm_arm_info", "llvm_arm_utils"
                      ] if "ARM" in supported_targets else [])
+                  + (["llvm_avr_code_gen", "llvm_avr_asm_parser",
+                      "llvm_avr_desc", "llvm_avr_disassembler",
+                      "llvm_avr_info"
+                     ] if "AVR" in supported_targets else [])
                   + (["llvm_bpf_code_gen", "llvm_bpf_asm_parser",
                       "llvm_bpf_desc", "llvm_bpf_disassembler",
                       "llvm_bpf_info"] if "BPF" in supported_targets else [])
@@ -1775,6 +1779,30 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_ARM_UTILS_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_arm_utils",
                 "LLVMARMUtils",
+                ["llvm_support"]),
+        "%{LLVM_AVR_ASMPARSER_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_avr_asm_parser",
+                "LLVMAVRAsmParser",
+                ["llvm_avr_desc", "llvm_avr_info", "llvm_mc",
+                 "llvm_mc_parser", "llvm_support"]),
+        "%{LLVM_AVR_CODEGEN_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_avr_code_gen",
+                "LLVMAVRCodeGen",
+                ["llvm_avr_desc", "llvm_avr_info", "llvm_asm_printer",
+                 "llvm_code_gen", "llvm_core", "llvm_mc",
+                 "llvm_selection_dag", "llvm_support", "llvm_target"]),
+        "%{LLVM_AVR_DESC_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_avr_desc",
+                "LLVMAVRDesc",
+                ["llvm_avr_info", "llvm_mc", "llvm_support"]),
+        "%{LLVM_AVR_DISASSEMBLER_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_avr_disassembler",
+                "LLVMAVRDisassembler",
+                ["llvm_avr_info", "llvm_mc_disassembler",
+                 "llvm_support"]),
+        "%{LLVM_AVR_INFO_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_avr_info",
+                "LLVMAVRInfo",
                 ["llvm_support"]),
         "%{LLVM_BPF_ASMPARSER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_bpf_asm_parser",

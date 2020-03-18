@@ -56,6 +56,9 @@ def if_has_amdgpu(if_true, if_false = []):
 def if_has_arm(if_true, if_false = []):
     return if_true if "ARM" in llvm_targets else if_false
 
+def if_has_avr(if_true, if_false = []):
+    return if_true if "AVR" in llvm_targets else if_false
+
 def if_has_bpf(if_true, if_false = []):
     return if_true if "BPF" in llvm_targets else if_false
 

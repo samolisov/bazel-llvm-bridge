@@ -37,6 +37,7 @@ load("@local_llvm//:llvm_config.bzl",
     "if_has_aarch64",
     "if_has_amdgpu",
     "if_has_arm",
+    "if_has_avr",
     "if_has_bpf",
     "if_has_hexagon",
     "if_has_lanai",
@@ -155,6 +156,12 @@ cc_binary(
         "@local_llvm//:arm_disassembler",
         "@local_llvm//:arm_info",
         "@local_llvm//:arm_utils",
+    ]) + if_has_avr([
+        "@local_llvm//:avr_asm_parser",
+        "@local_llvm//:avr_code_gen",
+        "@local_llvm//:avr_desc",
+        "@local_llvm//:avr_disassembler",
+        "@local_llvm//:avr_info",
     ]) + if_has_bpf([
         "@local_llvm//:bpf_asm_parser",
         "@local_llvm//:bpf_code_gen",
@@ -311,6 +318,7 @@ cc_binary(
     defines = if_has_aarch64(["LLVM_SUPPORTS_TARGET_AARCH64"])
         + if_has_amdgpu(["LLVM_SUPPORTS_TARGET_AMDGPU"])
         + if_has_arm(["LLVM_SUPPORTS_TARGET_ARM"])
+        + if_has_avr(["LLVM_SUPPORTS_TARGET_AVR"])
         + if_has_bpf(["LLVM_SUPPORTS_TARGET_BPF"])
         + if_has_hexagon(["LLVM_SUPPORTS_TARGET_HEXAGON"])
         + if_has_lanai(["LLVM_SUPPORTS_TARGET_LANAI"])
@@ -336,6 +344,10 @@ cc_binary(
         "@local_llvm//:arm_asm_parser",
         "@local_llvm//:arm_code_gen",
         "@local_llvm//:arm_disassembler",
+    ]) + if_has_avr([
+        "@local_llvm//:avr_asm_parser",
+        "@local_llvm//:avr_code_gen",
+        "@local_llvm//:avr_disassembler",
     ]) + if_has_bpf([
         "@local_llvm//:bpf_asm_parser",
         "@local_llvm//:bpf_code_gen",

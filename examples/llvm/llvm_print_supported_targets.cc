@@ -11,6 +11,9 @@ int main(int argc, char** argv) {
 #ifdef LLVM_SUPPORTS_TARGET_ARM
     std::cout << " - ARM" << std::endl;
 #endif
+#ifdef LLVM_SUPPORTS_TARGET_AVR
+    std::cout << " - AVR" << std::endl;
+#endif
 #ifdef LLVM_SUPPORTS_TARGET_BPF
     std::cout << " - BPF" << std::endl;
 #endif
