@@ -670,12 +670,12 @@ genrule(
         "@local_llvm//:cl_copy_libclang_cpp",
     ],
     outs = [
-        "libclang.so.10git",
-        "libclang-cpp.so.10git",
+        "libclang.so.10",
+        "libclang-cpp.so.10",
     ],
     cmd = """
-        cp -f $(location @local_llvm//:cl_copy_libclang) $(@D)/libclang.so.10git
-        cp -f $(location @local_llvm//:cl_copy_libclang_cpp) $(@D)/libclang-cpp.so.10git
+        cp -f $(location @local_llvm//:cl_copy_libclang) $(@D)/libclang.so.10
+        cp -f $(location @local_llvm//:cl_copy_libclang_cpp) $(@D)/libclang-cpp.so.10
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
@@ -729,10 +729,10 @@ genrule(
         "@local_llvm//:ml_copy_runner_utils",
     ],
     outs = [
-        "libmlir_runner_utils.so.10git",
+        "libmlir_runner_utils.so.10",
     ],
     cmd = """
-        cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)/libmlir_runner_utils.so.10git
+        cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)/libmlir_runner_utils.so.10
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
