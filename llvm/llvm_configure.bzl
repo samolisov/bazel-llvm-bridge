@@ -1073,7 +1073,7 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "clang_analysis",
                 "clangAnalysis",
                 ["clang_ast", "clang_ast_matchers", "clang_basic",
-                 "clang_lex", "llvm_support"] +
+                 "clang_lex", "llvm_frontend_open_mp", "llvm_support"] +
                   (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_ARCMIGRATE_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_arc_migrate",
@@ -1091,7 +1091,8 @@ def _llvm_installed_impl(repository_ctx):
         "%{CLANG_ASTMATCHERS_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_ast_matchers",
                 "clangASTMatchers",
-                ["clang_ast", "clang_basic", "clang_lex", "llvm_support"] +
+                ["clang_ast", "clang_basic", "clang_lex",
+                 "llvm_frontend_open_mp", "llvm_support"] +
                   (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_BASIC_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_basic",
@@ -1143,7 +1144,7 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "clang_dynamic_ast_matchers",
                 "clangDynamicASTMatchers",
                 ["clang_ast", "clang_ast_matchers", "clang_basic",
-                 "llvm_support"] +
+                 "llvm_frontend_open_mp", "llvm_support"] +
                   (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_EDIT_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_edit",
@@ -1320,29 +1321,29 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "clang_static_analyzer_checkers",
                 "clangStaticAnalyzerCheckers",
                 ["clang_ast", "clang_ast_matchers", "clang_analysis", "clang_basic",
-                 "clang_lex", "clang_static_analyzer_core", "llvm_support"] +
-                  (["clang_headers"] if add_hdrs else [])),
+                 "clang_lex", "clang_static_analyzer_core", "llvm_frontend_open_mp",
+                 "llvm_support"] + (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_STATICANALYZERCORE_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_static_analyzer_core",
                 "clangStaticAnalyzerCore",
                 ["clang_ast", "clang_ast_matchers", "clang_analysis", "clang_basic",
                  "clang_cross_tu", "clang_frontend", "clang_lex", "clang_rewrite",
-                 "llvm_support"] +
+                 "clang_tooling_core", "llvm_frontend_open_mp", "llvm_support"] +
                   (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_STATICANALYZERFRONTEND_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_static_analyzer_frontend",
                 "clangStaticAnalyzerFrontend",
-                ["clang_ast", "clang_analysis", "clang_basic", "clang_cross_tu",
-                 "clang_frontend", "clang_lex", "clang_static_analyzer_checkers",
-                 "clang_static_analyzer_core", "llvm_support"] +
-                  (["clang_headers"] if add_hdrs else [])),
+                ["clang_ast", "clang_ast_matchers", "clang_analysis", "clang_basic",
+                 "clang_cross_tu", "clang_frontend", "clang_lex",
+                 "clang_static_analyzer_checkers", "clang_static_analyzer_core",
+                 "llvm_support"] + (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_TOOLING_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_tooling",
                 "clangTooling",
                 ["clang_ast", "clang_ast_matchers", "clang_basic", "clang_driver",
                  "clang_format", "clang_frontend", "clang_lex", "clang_rewrite",
                  "clang_serialization", "clang_tooling_core",
-                 "llvm_option", "llvm_support"] +
+                 "llvm_option", "llvm_frontend_open_mp", "llvm_support"] +
                   (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_TOOLINGASTDIFF_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_tooling_ast_diff",
@@ -1379,7 +1380,8 @@ def _llvm_installed_impl(repository_ctx):
                 "clangTransformer",
                 ["clang_ast", "clang_ast_matchers", "clang_basic", "clang_lex",
                  "clang_tooling_core", "clang_tooling_refactoring",
-                 "llvm_support"] + (["clang_headers"] if add_hdrs else [])),
+                 "llvm_frontend_open_mp", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
 
         "%{LLVM_AGGRESSIVEINSTCOMBINE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_aggressive_inst_combine",
