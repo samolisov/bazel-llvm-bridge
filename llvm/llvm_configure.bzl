@@ -1460,7 +1460,8 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_DEBUGINFOGSYM_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_debug_info_gsym",
                 "LLVMDebugInfoGSYM",
-                ["llvm_debug_info_dwarf", "llvm_mc", "llvm_support"]),
+                ["llvm_debug_info_dwarf", "llvm_mc", "llvm_object",
+                 "llvm_support"]),
         "%{LLVM_DEBUGINFOMSF_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_debug_info_msf",
                 "LLVMDebugInfoMSF", ["llvm_support"]),
@@ -1552,11 +1553,12 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "llvm_lto",
                 "LLVMLTO",
                 ["llvm_aggressive_inst_combine", "llvm_analysis",
-                 "llvm_bit_reader", "llvm_bit_writer", "llvm_code_gen",
-                 "llvm_core", "llvm_inst_combine", "llvm_linker", "llvm_mc",
-                 "llvm_objc_arc", "llvm_object", "llvm_passes",
-                 "llvm_remarks", "llvm_scalar", "llvm_support",
-                 "llvm_target", "llvm_transform_utils", "llvm_ipo"]),
+                 "llvm_binary_format", "llvm_bit_reader", "llvm_bit_writer",
+                 "llvm_code_gen", "llvm_core", "llvm_inst_combine",
+                 "llvm_linker", "llvm_mc", "llvm_objc_arc", "llvm_object",
+                 "llvm_passes", "llvm_remarks", "llvm_scalar",
+                 "llvm_support", "llvm_target", "llvm_transform_utils",
+                 "llvm_ipo"]),
         "%{LLVM_MC_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_mc",
                 "LLVMMC",
