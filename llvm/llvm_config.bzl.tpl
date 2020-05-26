@@ -1,6 +1,20 @@
 # -*- Python -*-
 """Skylark macros for bazel-llvm-bridge.
 
+llvm_enables_eh is a flag that displays if LLVM is built with exception
+support.
+
+if_llvm_enables_eh is a condition to check if the LLVM installation
+is built with enabled exception support. If so, the first argument will
+be returned, otherwise the second one.
+
+llvm_enables_rtti is a flag that displays if LLVM is built with enabled
+RTTI.
+
+if_llvm_enables_rtti is a condition to check if the LLVM installation
+is built with enabled RTTI. If so, the first argument will be returned,
+otherwise the second one.
+
 llvm_nix_copts is a convenient set of platform-dependent compiler options
 to enable the building process of LLVM-dependent targets for *Nix platforms.
 It can disable RTTI and enable the right level of C++.
@@ -15,23 +29,51 @@ May be used to enable "libc++" as a standard library for the build.
 llvm_cxx_linked is a flag that displays if LLVM is linked against the "libc++"
 standard library.
 
-if_cxx_linked is a conditional to check if the LLVM installation
+if_cxx_linked is a condition to check if the LLVM installation
 is built against the "libc++" standard library. If so, the first argument
 will be returned, otherwise the second one.
 
 llvm_targets is a list of supported targets ("AArch64", "ARM", "X86", etc.)
 
-if_has_<TARGET> is a conditional to check if we are building with the target
+if_has_<TARGET> is a condition to check if we are building with the target
 <TARGET>. If the target is supported, the first argument will be returned,
 otherwise the second one.
 """
 
+llvm_enables_eh = %{LLVM_ENABLE_EH}
+
+def if_llvm_enables_eh(if_true, if_false = []):
+    return if_true if llvm_enables_eh else if_false
+
+llvm_enables_rtti = %{LLVM_ENABLE_RTTI}
+
+def if_llvm_enables_rtti(if_true, if_false = []):
+    return if_true if llvm_enables_rtti else if_false
+
 llvm_nix_copts = [
-    "-fno-rtti",
-]
+    "-Wno-unused-member-function",
+    "-Wno-unused-parameter",
+    "-Wno-unused-private-field",
+    "-Wno-unused-variable",
+    "-Wno-used-but-marked-unused",
+] + if_llvm_enables_rtti(["-frtti"], ["-fno-rtti"]
+) + if_llvm_enables_eh(["-fexceptions"], ["-fno-exceptions"])
 
 llvm_win_copts = [
-]
+    "/bigobj",
+    "-wd4141",
+    "-wd4146",
+    "-wd4244",
+    "-wd4267",
+    "-wd4624",
+    "-w14062",
+    "-we4238",
+] + if_llvm_enables_rtti(["/GR"], ["/GR-"])
+  # Bazel currently pass /EHsc to enable exception by default.
+  # We cannot disable exceptions: a lot of warnings D9025 will be generated.
+#+ if_llvm_enables_eh(
+#        ["/EHsc"],
+#        ["/EHs-c-", "/D_HAS_EXCEPTIONS=0"])
 
 llvm_targets = [
 %{LLVM_TARGETS}
