@@ -199,6 +199,7 @@ The **bazel-llvm-bridge** supports all out-of-the-box provided LLVM targets:
  * AArch64
  * AMDGPU
  * ARM
+ * AVR
  * BPF
  * Hexagon
  * Lanai
