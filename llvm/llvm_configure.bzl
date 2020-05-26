@@ -761,36 +761,63 @@ def _llvm_get_linked_libraries(repository_ctx):
 
     return (linkopts, deps)
 
-def _llvm_get_target_list(repository_ctx):
-    """Returns a list of supported targets.
+def _llvm_get_installation_options(repository_ctx):
+    """Returns a tuple with build options of the LLVM installation:
+       whether RTTI and EH are enabled as well as the list of
+       supported targets.
 
        Implementation notes: the method uses the
        "lib/cmake/llvm/LLVMConfig.cmake" file and reads the
-       value of the 'LLVM_TARGETS_TO_BUILD' property.
+       value of the 'LLVM_ENABLE_RTTI', 'LLVM_ENABLE_EH', and
+       'LLVM_TARGETS_TO_BUILD' properties.
 
     Args:
         repository_ctx: the repository_ctx object.
     Returns:
-        A list of targets supported by installation.
+        A tuple with the following LLVM options:
+         - The LLVM_ENABLE_RTTI flag,
+         - The LLVM_ENABLE_EH flag,
+         - A list of targets supported by installation.
     """
     configpath = repository_ctx.path("lib/cmake/llvm/LLVMConfig.cmake")
     if not configpath.exists:
         return []
     config = repository_ctx.read("lib/cmake/llvm/LLVMConfig.cmake")
     targets_line = ""
+    rtti_enable_line = ""
+    eh_enable_line = ""
     lines = config.splitlines()
     for line in lines:
         if line.startswith("set(LLVM_TARGETS_TO_BUILD"):
             targets_line = line
+        elif line.startswith("set(LLVM_ENABLE_RTTI"):
+            rtti_enable_line = line
+        elif line.startswith("set(LLVM_ENABLE_EH"):
+            eh_enable_line = line
+
+        if len(rtti_enable_line) > 0 and len(eh_enable_line) > 0 and len(targets_line) > 0:
             break
 
-    if len(targets_line) == 0:
-        return []
+    enable_rtti = False
+    if len(rtti_enable_line) > 0:
+        start = rtti_enable_line.find(' ')
+        end = rtti_enable_line.find(')', start + 1)
+        enable_rtti = rtti_enable_line[start + 1:end] == 'ON'
 
-    start = targets_line.find(' ')
-    end = targets_line.find(')', start + 1)
-    targets_line = targets_line[start + 1:end]
-    return targets_line.split(";")
+    enable_eh = False
+    if len(eh_enable_line) > 0:
+        start = eh_enable_line.find(' ')
+        end = eh_enable_line.find(')', start + 1)
+        enable_eh = eh_enable_line[start + 1:end] == 'ON'
+
+    targets = []
+    if len(targets_line) > 0:
+        start = targets_line.find(' ')
+        end = targets_line.find(')', start + 1)
+        targets_line = targets_line[start + 1:end]
+        targets = targets_line.split(";")
+
+    return (enable_rtti, enable_eh, targets)
 
 def _llvm_get_formatted_target_list(repository_ctx, targets):
     """Returns a list of formatted 'targets': a comma separated list of targets
@@ -972,7 +999,9 @@ def _llvm_installed_impl(repository_ctx):
     # Symlink LLVM dependencies
     llvm_linkopts, llvm_deps = _llvm_symlink_dependencies(repository_ctx)
 
-    supported_targets = _llvm_get_target_list(repository_ctx)
+    # LLVM installation options
+    enable_rtti, enable_eh, supported_targets = _llvm_get_installation_options(
+        repository_ctx)
     ctx = repository_ctx
     prx = prefix_dictionary
     add_hdrs = repository_ctx.attr.add_headers_to_deps
@@ -2011,6 +2040,8 @@ def _llvm_installed_impl(repository_ctx):
     })
 
     _tpl(repository_ctx, "llvm_config.bzl", {
+        "%{LLVM_ENABLE_RTTI}": str(enable_rtti),
+        "%{LLVM_ENABLE_EH}": str(enable_eh),
         "%{LLVM_TARGETS}": _llvm_get_formatted_target_list(repository_ctx,
             supported_targets),
         "%{LLVM_CXX_LINKED}": str(_llvm_is_linked_against_cxx(repository_ctx)),
