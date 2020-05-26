@@ -95,6 +95,7 @@ cc_binary(
         "@local_llvm//:dlltool_driver",
         "@local_llvm//:dwarf_linker",
         "@local_llvm//:execution_engine",
+        "@local_llvm//:extensions",
         "@local_llvm//:frontend_open_mp",
         "@local_llvm//:fuzz_mutate",
         "@local_llvm//:global_i_sel",
@@ -233,7 +234,6 @@ cc_binary(
         "@local_llvm//:x86_desc",
         "@local_llvm//:x86_disassembler",
         "@local_llvm//:x86_info",
-        "@local_llvm//:x86_utils",
     ]) + if_has_x_core([
         "@local_llvm//:x_core_code_gen",
         "@local_llvm//:x_core_desc",
