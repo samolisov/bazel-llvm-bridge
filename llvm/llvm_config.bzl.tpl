@@ -23,9 +23,6 @@ llvm_win_copts is a convenient set of platform-dependent compiler options
 to enable the building process of LLVM-dependent targets for Windows platform.
 It can disable RTTI and enable the right level of C++.
 
-llvm_cxx_copts is a convenient set of "libc++" specific compiler options.
-May be used to enable "libc++" as a standard library for the build.
-
 llvm_cxx_linked is a flag that displays if LLVM is linked against the "libc++"
 standard library.
 
@@ -51,8 +48,6 @@ def if_llvm_enables_rtti(if_true, if_false = []):
     return if_true if llvm_enables_rtti else if_false
 
 llvm_nix_copts = [
-    "-std=c++14",
-    "-fno-exceptions",
     "-Wno-unused-member-function",
     "-Wno-unused-parameter",
     "-Wno-unused-private-field",
@@ -62,7 +57,6 @@ llvm_nix_copts = [
 ) + if_llvm_enables_eh(["-fexceptions"], ["-fno-exceptions"])
 
 llvm_win_copts = [
-    "/std:c++14",
     "/bigobj",
     "-wd4141",
     "-wd4146",
@@ -78,14 +72,10 @@ llvm_win_copts = [
 #        ["/EHsc"],
 #        ["/EHs-c-", "/D_HAS_EXCEPTIONS=0"])
 
-llvm_targets = [
-%{LLVM_TARGETS}
-]
-
 llvm_cxx_linked = %{LLVM_CXX_LINKED}
 
-llvm_cxx_copts = [
-    %{LLVM_CXX_COPT}
+llvm_targets = [
+%{LLVM_TARGETS}
 ]
 
 def if_cxx_linked(if_true, if_false = []):
