@@ -9,12 +9,17 @@
 #     opt:           Enables mac-compiler optimizations.
 #
 # Windows options:
+#     clang-cl:      Enables the clang-cl compiler on Windows
+#     opt:           Enables clang-cl specific optimizations.
 #     opt-msvc:      Enables MSVC-specific optimizations.
 #
 
 
 # Enable using platform specific build settings
 build --enable_platform_specific_config
+
+# Enable using toolchain resolution
+build --incompatible_enable_cc_toolchain_resolution
 
 # Enable common optimization for almost all compilers
 build:opt -c opt
@@ -23,6 +28,10 @@ build:opt --copt=-march=native
 # Enable MSVC-specific optimizations
 build:opt-msvc -c opt
 build:opt-msvc --copt=/arch:AVX2
+
+# Enable clang-cl compiler
+build:clang-cl --extra_execution_platforms=//:x64_windows-clang-cl
+build:clang-cl --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl
 
 # Linux configs
 build:linux --copt=-Wall
