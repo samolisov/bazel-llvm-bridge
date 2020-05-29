@@ -2045,8 +2045,6 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_TARGETS}": _llvm_get_formatted_target_list(repository_ctx,
             supported_targets),
         "%{LLVM_CXX_LINKED}": str(_llvm_is_linked_against_cxx(repository_ctx)),
-        "%{LLVM_CXX_COPT}": "\"-stdlib=libc++\"" if _llvm_is_linked_against_cxx(
-            repository_ctx) else "",
     })
 
     if _llvm_if_tablegen(repository_ctx, "llvm"):

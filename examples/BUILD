@@ -32,7 +32,6 @@ config_setting(
 load("@local_llvm//:llvm_config.bzl",
     "llvm_nix_copts",
     "llvm_win_copts",
-    "llvm_cxx_copts",
     "if_cxx_linked",
     "if_has_aarch64",
     "if_has_amdgpu",
@@ -54,8 +53,8 @@ load("@local_llvm//:llvm_config.bzl",
 load("@local_llvm//:llvm_tablegen.bzl", "tablegen")
 
 llvm_copts = select({
-    ":linux_x86_64": llvm_nix_copts + llvm_cxx_copts,
-    ":macos_x86_64": llvm_nix_copts + llvm_cxx_copts,
+    ":linux_x86_64": llvm_nix_copts,
+    ":macos_x86_64": llvm_nix_copts,
     ":windows_x86_64": llvm_win_copts,
     "//conditions:default": [],
 })

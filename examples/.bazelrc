@@ -1,0 +1,39 @@
+# configuration file for bazel-llvm-bridge examples.
+# This file groups build options for examples by systems, compilers
+# and system libraries.
+#
+# Linux options:
+#     opt:           Enables linux-compiler optimizations.
+#
+# macOS options: (have not been tested yet)
+#     opt:           Enables mac-compiler optimizations.
+#
+# Windows options:
+#     opt-msvc:      Enables MSVC-specific optimizations.
+#
+
+
+# Enable using platform specific build settings
+build --enable_platform_specific_config
+
+# Enable common optimization for almost all compilers
+build:opt -c opt
+build:opt --copt=-march=native
+
+# Enable MSVC-specific optimizations
+build:opt-msvc -c opt
+build:opt-msvc --copt=/arch:AVX2
+
+# Linux configs
+build:linux --copt=-Wall
+build:linux --copt=-Wextra
+build:linux --cxxopt=-std=c++17
+
+# macOS configs
+build:macos --copt=-Wall
+build:macos --copt=-Wextra
+build:macos --cxxopt=-std=c++17
+
+# Windows configs
+build:windows --copt=/W3
+build:windows --cxxopt=/std:c++17
