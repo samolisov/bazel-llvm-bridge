@@ -311,25 +311,36 @@ genrule in the BUILD file) and be used for running your applications.
 ### Linking against the libc++ standard library
 
 Archives hosted on the http://releases.llvm.org/download.html official website,
-usually are built against the 'libc++' standard library. A number of Starlark
-macroses and pre-defined arrays are developed to deal with the 'libc++' standard
-library and can be loaded from the generated `llvm_config.bzl` file. The `if_cxx_linked`
-function is used to safely add the `libcxx_static/libcxx_shared` and
+are usually built against the libc++ standard library. A Starlark macros is
+developed to deal with the libc++ standard library and can be loaded from
+the generated `llvm_config.bzl` file. The `if_cxx_linked` function is used to
+safely add the libc++ header library, `libcxx_static/libcxx_shared` and
 `libcxx_abi_static/libcxx_abi_shared` targets as dependencies. The first argument
 of the function will be taken into account when the local LLVM installation
-is linked against 'libc++', otherwise the second one (optional) will be used.
+is linked against libc++, otherwise the second one (optional) will be used.
 
-The `-stdlib=libc++` compiler option can be added as the `llvm_cxx_copts` array.
-If 'libc++' is not used, the array will just be empty, so that the array
-should not be wrapped in the `if_cxx_linked` function.
+Notice: We assume the local installation of LLVM is linked against libc++ if
+the latter exists there.
+
+Since the libc++ header library is added to dependencies, there can be some
+collisions between the default C++ standard library (libstdc++, for example) and
+the provided libc++ headers. To eliminate the collisions, the "-nostdinc++"
+compiler option should be added to the 'copt' parameter of the targets (wrapped
+into the 'if_cxx_linked' condition).
 
 There is an example how to use the `libcxx_*` targets and options:
 
 ```bzl
 llvm_copts = select({
-    ":linux_x86_64": llvm_nix_copts + llvm_cxx_copts,
-    ":macos_x86_64": llvm_nix_copts + llvm_cxx_copts,
+    ":linux_x86_64": llvm_nix_copts + if_cxx_linked(["-nostdinc++"]),
+    ":macos_x86_64": llvm_nix_copts + if_cxx_linked(["-nostdinc++"]),
     ":windows_x86_64": llvm_win_copts,
+    "//conditions:default": [],
+})
+
+llvm_linkopts = select({
+    ":linux_x86_64": if_cxx_linked(["-stdlib=libc++"]),
+    ":macos_x86_64": if_cxx_linked(["-stdlib=libc++"]),
     "//conditions:default": [],
 })
 
@@ -339,10 +350,12 @@ cc_binary(
         "llvm/llvm_bb_counter.cc",
     ],
     copts = llvm_copts,
+    linkopts = llvm_linkopts,
     deps = [
         "@local_llvm//:llvm_headers",
         "@local_llvm//:llvm_bit_reader",
     ] + if_cxx_linked([
+        "@local_llvm//:libcxx_headers",
         "@local_llvm//:libcxx_static",      # if you prefer shared libraries,
         "@local_llvm//:libcxx_abi_static",  # use libcxx_shared and libcxx_abi_shared
     ]),
