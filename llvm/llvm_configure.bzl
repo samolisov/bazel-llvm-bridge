@@ -424,7 +424,8 @@ def _llvm_get_include_rule(
         repository_ctx,
         prefix_dict,
         name,
-        include_local_dirs):
+        include_local_dirs,
+        includes = ["include"]):
     """Returns a cc_library to include an LLVM header directory
 
     Args:
@@ -433,6 +434,7 @@ def _llvm_get_include_rule(
         name: rule name.
         include_local_dirs: names of local directories inside the 'include' one
                             of the local LLVM installation.
+        includes: the value of the 'includes' argument.
     Returns:
         cc_library target that defines the header library.
     """
@@ -447,7 +449,7 @@ def _llvm_get_include_rule(
             _llvm_get_rule_name(prefix_dict, name),
             [],  # LLVM's include is the public interface
             llvm_include_dirs,
-            ["include"]
+            includes
         )
     else:
         llvm_include_rule = "# directories '%s' are not found inside\
@@ -1012,6 +1014,10 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_HEADERS_LIB}":
             _llvm_get_include_rule(ctx, prx, "llvm_headers",
                 ["llvm", "llvm-c"]),
+        "%{LIBCXX_HEADERS_LIB}":
+            _llvm_get_include_rule(ctx, prx, "libcxx_headers",
+                ["c++/v1"],
+                ["include/c++/v1"]),
 
         "%{CLANG_ANALYSIS_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_analysis",
@@ -2015,14 +2021,16 @@ def _llvm_installed_impl(repository_ctx):
                 "llvm_config_files", "generated/include"),
 
         "%{LIBCXX_STATIC_LIB}":
-            _llvm_get_library_rule(ctx, prx, "libcxx_static", "c++"),
+            _llvm_get_library_rule(ctx, prx, "libcxx_static", "c++",
+                (["libcxx_headers"] if add_hdrs else [])),
         "%{LIBCXX_SHARED_LIB}":
             _llvm_get_shared_library_rule(ctx, prx, "libcxx_shared", "c++"),
         "%{LIBCXX_SHARED_COPY_GENRULE}":
             _llvm_get_shared_lib_genrule(ctx, prx, "libcxx_copy_shared",
                 llvm_path, "c++"),
         "%{LIBCXX_ABI_STATIC_LIB}":
-            _llvm_get_library_rule(ctx, prx, "libcxx_abi_static", "c++abi"),
+            _llvm_get_library_rule(ctx, prx, "libcxx_abi_static", "c++abi",
+                (["libcxx_headers"] if add_hdrs else [])),
         "%{LIBCXX_ABI_SHARED_LIB}":
             _llvm_get_shared_library_rule(ctx, prx, "libcxx_abi_shared",
                 "c++abi"),
