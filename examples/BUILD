@@ -673,6 +673,7 @@ cc_binary(
         "@local_llvm//:ml_scf_transforms",
         "@local_llvm//:ml_sdbm",
         "@local_llvm//:ml_shape",
+        "@local_llvm//:ml_shape_to_standard",
         "@local_llvm//:ml_side_effect_interfaces",
         "@local_llvm//:ml_spirv",
         "@local_llvm//:ml_spirv_serialization",
@@ -699,9 +700,7 @@ cc_binary(
         "@local_llvm//:ml_vector_to_llvm",
         "@local_llvm//:ml_vector_to_scf",
         "@local_llvm//:ml_view_like_interface",
-    ]  + if_has_nvptx([
-        "@local_llvm//:ml_gpu_to_cuda_transforms",
-    ]) + if_cxx_linked([
+    ] + if_cxx_linked([
         "@local_llvm//:cxx_headers",
         "@local_llvm//:cxx_shared",
         "@local_llvm//:cxx_abi_shared",
