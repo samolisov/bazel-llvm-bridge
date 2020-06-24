@@ -1372,6 +1372,10 @@ def _llvm_installed_impl(repository_ctx):
                  "clang_cross_tu", "clang_frontend", "clang_lex",
                  "clang_static_analyzer_checkers", "clang_static_analyzer_core",
                  "llvm_support"] + (["clang_headers"] if add_hdrs else [])),
+        "%{CLANG_TESTING_LIB}":
+            _llvm_get_library_rule(ctx, prx, "clang_testing",
+                "clangTesting",
+                ["llvm_support"] + (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_TOOLING_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_tooling",
                 "clangTooling",

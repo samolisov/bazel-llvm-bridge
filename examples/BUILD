@@ -564,6 +564,7 @@ cc_binary(
         "@local_llvm//:cl_static_analyzer_checkers",
         "@local_llvm//:cl_static_analyzer_core",
         "@local_llvm//:cl_static_analyzer_frontend",
+        "@local_llvm//:cl_testing",
         "@local_llvm//:cl_tooling",
         "@local_llvm//:cl_tooling_ast_diff",
         "@local_llvm//:cl_tooling_core",
