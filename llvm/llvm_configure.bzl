@@ -1678,7 +1678,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_RUNTIMEDYLD_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_runtime_dyld",
                 "LLVMRuntimeDyld",
-                ["llvm_mc", "llvm_object", "llvm_support"]),
+                ["llvm_core", "llvm_mc", "llvm_object", "llvm_support"]),
         "%{LLVM_SCALAR_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_scalar",
                 "LLVMScalarOpts",
