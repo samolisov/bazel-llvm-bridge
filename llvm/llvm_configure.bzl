@@ -1530,6 +1530,9 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_EXTENSIONS}":
             _llvm_get_library_rule(ctx, prx, "llvm_extensions",
                 "LLVMExtensions"),
+        "%{LLVM_FRONTEND_OPENACC_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_frontend_open_acc",
+                "LLVMFrontendOpenACC", ["llvm_support"]),
         "%{LLVM_FRONTEND_OPENMP_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_frontend_open_mp",
                 "LLVMFrontendOpenMP",
@@ -1662,10 +1665,9 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "llvm_passes",
                 "LLVMPasses",
                 ["llvm_aggressive_inst_combine", "llvm_analysis",
-                 "llvm_code_gen", "llvm_core", "llvm_coroutines",
-                 "llvm_inst_combine", "llvm_instrumentation",
-                 "llvm_scalar", "llvm_support", "llvm_target",
-                 "llvm_transform_utils", "llvm_vectorize",
+                 "llvm_core", "llvm_coroutines", "llvm_inst_combine",
+                 "llvm_instrumentation", "llvm_scalar", "llvm_support",
+                 "llvm_target", "llvm_transform_utils", "llvm_vectorize",
                  "llvm_ipo"]),
         "%{LLVM_PROFILEDATA_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_profile_data",
