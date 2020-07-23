@@ -2221,14 +2221,6 @@ def _llvm_installed_impl(repository_ctx):
                  "mlir_standard_ops", "mlir_transform_utils", "mlir_vector",
                  "mlir_vector_to_llvm", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
-        "%{MLIR_AFFINETRANSFORMSTESTPASSES_LIB}":
-            _llvm_get_library_rule(ctx, prx,
-                "mlir_affine_transforms_test_passes",
-                "MLIRAffineTransformsTestPasses",
-                ["mlir_ir", "mlir_pass", "mlir_affine_transforms",
-                 "mlir_support", "mlir_affine_utils", "llvm_core",
-                 "llvm_support"] +
-                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_AFFINEUTILS_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_affine_utils",
                 "MLIRAffineUtils",
@@ -2497,9 +2489,6 @@ def _llvm_installed_impl(repository_ctx):
                  "mlir_spirv_to_llvm", "mlir_standard_to_llvm",
                  "mlir_standard_to_spirv_transforms", "mlir_vector_to_rocdl",
                  "mlir_vector_to_llvm", "mlir_vector_to_scf",
-                 "mlir_affine_transforms_test_passes",
-                 "mlir_spirv_test_passes", "mlir_test_dialect",
-                 "mlir_test_ir", "mlir_test_pass", "mlir_test_transforms",
                  "mlir_loop_analysis", "mlir_analysis", "mlir_dialect",
                  "mlir_edsc", "mlir_opt_lib", "mlir_parser", "mlir_pass",
                  "mlir_transforms", "mlir_transform_utils", "mlir_support",
@@ -2645,12 +2634,6 @@ def _llvm_installed_impl(repository_ctx):
                 ["mlir_ir", "mlir_spirv", "mlir_support", "mlir_translation",
                  "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
-        "%{MLIR_SPIRVTESTPASSES_LIB}":
-            _llvm_get_library_rule(ctx, prx, "mlir_spirv_test_passes",
-                "MLIRSPIRVTestPasses",
-                ["mlir_ir", "mlir_pass", "mlir_spirv", "mlir_support",
-                 "llvm_support"] +
-                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_SPIRVTOLLVM_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_spirv_to_llvm",
                 "MLIRSPIRVToLLVM",
@@ -2734,38 +2717,6 @@ def _llvm_installed_impl(repository_ctx):
                 ["mlir_gpu", "mlir_ir", "mlir_llvm_ir", "mlir_rocdl_ir",
                  "mlir_target_llvm_ir_module_translation",
                  "llvm_core", "llvm_support"] +
-                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
-        "%{MLIR_TESTDIALECT_LIB}":
-            _llvm_get_library_rule(ctx, prx, "mlir_test_dialect",
-                "MLIRTestDialect",
-                ["mlir_control_flow_interfaces",
-                 "mlir_derived_attribute_op_interface", "mlir_dialect",
-                 "mlir_ir", "mlir_infer_type_op_interface",
-                 "mlir_linalg_transforms", "mlir_pass", "mlir_standard_ops",
-                 "mlir_standard_ops_transforms", "mlir_transform_utils",
-                 "mlir_transforms", "llvm_support"] +
-                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
-        "%{MLIR_TESTIR_LIB}":
-            _llvm_get_library_rule(ctx, prx, "mlir_test_ir",
-                "MLIRTestIR",
-                ["mlir_pass", "mlir_test_dialect", "llvm_support"] +
-                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
-        "%{MLIR_TESTPASS_LIB}":
-            _llvm_get_library_rule(ctx, prx, "mlir_test_pass",
-                "MLIRTestPass",
-                ["mlir_ir", "mlir_pass", "llvm_support"] +
-                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
-        "%{MLIR_TESTTRANSFORMS_LIB}":
-            _llvm_get_library_rule(ctx, prx, "mlir_test_transforms",
-                "MLIRTestTransforms",
-                ["mlir_affine_ops", "mlir_analysis", "mlir_edsc", "mlir_gpu",
-                 "mlir_gpu_to_gpu_runtime_transforms", "mlir_linalg_ops",
-                 "mlir_linalg_transforms", "mlir_nvvm_ir", "mlir_scf",
-                 "mlir_scf_transforms", "mlir_pass", "mlir_rocdl_ir",
-                 "mlir_standard_ops_transforms", "mlir_target_nvvm_ir",
-                 "mlir_target_rocdl_ir", "mlir_test_dialect",
-                 "mlir_transform_utils", "mlir_vector_to_scf", "mlir_vector",
-                 "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_TRANSFORMS_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_transforms",
