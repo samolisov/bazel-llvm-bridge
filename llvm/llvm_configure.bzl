@@ -1645,8 +1645,8 @@ def _llvm_installed_impl(repository_ctx):
        "%{LLVM_OBJECTYAML_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_object_yaml",
                 "LLVMObjectYAML",
-                ["llvm_debug_info_code_view", "llvm_mc", "llvm_object",
-                 "llvm_support"]),
+                ["llvm_binary_format", "llvm_debug_info_code_view", "llvm_mc",
+                 "llvm_object", "llvm_support"]),
        "%{LLVM_OPTION_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_option",
                 "LLVMOption", ["llvm_support"]),
