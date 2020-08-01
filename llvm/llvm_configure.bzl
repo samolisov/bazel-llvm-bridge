@@ -2594,7 +2594,8 @@ def _llvm_installed_impl(repository_ctx):
                 "MLIRShape",
                 ["mlir_control_flow_interfaces", "mlir_dialect",
                  "mlir_infer_type_op_interface", "mlir_ir",
-                 "mlir_side_effect_interfaces", "llvm_support"] +
+                 "mlir_side_effect_interfaces", "mlir_standard_ops",
+                 "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_SHAPEOPSTRANSFORMS_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_shape_ops_transforms",
@@ -2650,7 +2651,7 @@ def _llvm_installed_impl(repository_ctx):
                 "MLIRStandardOps",
                 ["mlir_call_interfaces", "mlir_control_flow_interfaces",
                  "mlir_edsc", "mlir_ir", "mlir_side_effect_interfaces",
-                 "mlir_vector_unroll_interface", "mlir_view_like_interface",
+                 "mlir_vector_interfaces", "mlir_view_like_interface",
                  "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_STANDARDOPSTRANSFORMS_LIB}":
@@ -2678,7 +2679,7 @@ def _llvm_installed_impl(repository_ctx):
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_TABLEGEN_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_tablegen",
-                "MLIRTableGen",
+                "MLIRTableGen", ["llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_TABLEGEN_TOOL}":
             _llvm_get_executable_file_rule(ctx, prx, "mlir_tablegen_tool",
@@ -2743,7 +2744,7 @@ def _llvm_installed_impl(repository_ctx):
                 "MLIRVector",
                 ["mlir_edsc", "mlir_ir", "mlir_standard_ops", "mlir_affine_ops",
                  "mlir_scf", "mlir_loop_analysis", "mlir_side_effect_interfaces",
-                 "mlir_vector_unroll_interface", "llvm_support"] +
+                 "mlir_vector_interfaces", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_VECTORTOLLVM_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_vector_to_llvm",
@@ -2763,9 +2764,9 @@ def _llvm_installed_impl(repository_ctx):
                 ["mlir_edsc", "mlir_affine_edsc", "mlir_llvm_ir",
                  "mlir_transforms", "llvm_core", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
-        "%{MLIR_VECTORUNROLLINTERFACE_LIB}":
-            _llvm_get_library_rule(ctx, prx, "mlir_vector_unroll_interface",
-                "MLIRVectorUnrollInterface",
+        "%{MLIR_VECTORINTERFACES_LIB}":
+            _llvm_get_library_rule(ctx, prx, "mlir_vector_interfaces",
+                "MLIRVectorInterfaces",
                 ["mlir_ir", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_VIEWLIKEINTERFACE_LIB}":

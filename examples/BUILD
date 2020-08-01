@@ -704,7 +704,7 @@ cc_binary(
         "@local_llvm//:ml_vector_to_llvm",
         "@local_llvm//:ml_vector_to_rocdl",
         "@local_llvm//:ml_vector_to_scf",
-        "@local_llvm//:ml_vector_unroll_interface",
+        "@local_llvm//:ml_vector_interfaces",
         "@local_llvm//:ml_view_like_interface",
     ] + if_cxx_linked([
         "@local_llvm//:cxx_headers",
