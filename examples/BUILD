@@ -32,7 +32,6 @@ config_setting(
 load("@local_llvm//:llvm_config.bzl",
     "llvm_nix_copts",
     "llvm_win_copts",
-    "if_cxx_linked",
     "if_has_aarch64",
     "if_has_amdgpu",
     "if_has_arm",
@@ -54,15 +53,9 @@ load("@local_llvm//:llvm_config.bzl",
 load("@local_llvm//:llvm_tablegen.bzl", "tablegen")
 
 llvm_copts = select({
-    ":linux_x86_64": llvm_nix_copts + if_cxx_linked(["-nostdinc++"]),
-    ":macos_x86_64": llvm_nix_copts + if_cxx_linked(["-nostdinc++"]),
+    ":linux_x86_64": llvm_nix_copts,
+    ":macos_x86_64": llvm_nix_copts,
     ":windows_x86_64": llvm_win_copts,
-    "//conditions:default": [],
-})
-
-llvm_linkopts = select({
-    ":linux_x86_64": if_cxx_linked(["-stdlib=libc++"]),
-    ":macos_x86_64": if_cxx_linked(["-stdlib=libc++"]),
     "//conditions:default": [],
 })
 
@@ -75,7 +68,6 @@ cc_binary(
         "llvm/llvm_empty_main.cc",
     ],
     copts = llvm_copts,
-    linkopts = llvm_linkopts,
     deps = [
         "@local_llvm//:config_headers",
         "@local_llvm//:headers",
@@ -246,10 +238,6 @@ cc_binary(
         "@local_llvm//:x_core_desc",
         "@local_llvm//:x_core_disassembler",
         "@local_llvm//:x_core_info",
-    ]) + if_cxx_linked([
-        "@local_llvm//:cxx_headers",
-        "@local_llvm//:cxx_shared",
-        "@local_llvm//:cxx_abi_shared",
     ]),
     visibility = ["//visibility:private"],
 )
@@ -264,15 +252,10 @@ cc_binary(
         "llvm/llvm_bb_counter.cc",
     ],
     copts = llvm_copts,
-    linkopts = llvm_linkopts,
     deps = [
         "@local_llvm//:headers",
         "@local_llvm//:bit_reader",
-    ] + if_cxx_linked([
-        "@local_llvm//:cxx_headers",
-        "@local_llvm//:cxx_static",
-        "@local_llvm//:cxx_abi_static",
-    ]),
+    ],
     visibility = ["//visibility:private"],
 )
 
@@ -287,13 +270,10 @@ cc_library(
         "llvm/function_argument_usage_pass.cc",
     ],
     copts = llvm_copts,
-    linkopts = llvm_linkopts,
     deps = [
         "@local_llvm//:headers",
         "@local_llvm//:core",
-    ] + if_cxx_linked([
-        "@local_llvm//:cxx_headers",
-    ]),
+    ],
     alwayslink = 1, # this is required to get a link error when
                     # a dependency has been missed
     visibility = ["//visibility:public"],
@@ -309,14 +289,9 @@ cc_binary(
         "llvm/llvm_empty_main.cc",
     ],
     copts = llvm_copts,
-    linkopts = llvm_linkopts,
     deps = [
         ":llvm_exp_passes",
-    ] + if_cxx_linked([
-        "@local_llvm//:cxx_headers",
-        "@local_llvm//:cxx_shared",
-        "@local_llvm//:cxx_abi_shared",
-    ]),
+    ],
     visibility = ["//visibility:private"],
 )
 
@@ -331,7 +306,6 @@ cc_binary(
         "llvm/llvm_print_supported_targets.cc",
     ],
     copts = llvm_copts,
-    linkopts = llvm_linkopts,
     defines = if_has_aarch64(["LLVM_SUPPORTS_TARGET_AARCH64"])
         + if_has_amdgpu(["LLVM_SUPPORTS_TARGET_AMDGPU"])
         + if_has_arm(["LLVM_SUPPORTS_TARGET_ARM"])
@@ -414,10 +388,6 @@ cc_binary(
     ]) + if_has_x_core([
         "@local_llvm//:x_core_code_gen",
         "@local_llvm//:x_core_disassembler",
-    ]) + if_cxx_linked([
-        "@local_llvm//:cxx_headers",
-        "@local_llvm//:cxx_shared",
-        "@local_llvm//:cxx_abi_shared",
     ]),
 )
 
@@ -435,17 +405,12 @@ cc_binary(
         "llvm/llvm_print_physical_registers.cc",
     ],
     copts = llvm_copts,
-    linkopts = llvm_linkopts,
     deps = [
         "@local_llvm//:headers",
         "@local_llvm//:code_gen",
         "@local_llvm//:support",
         ":tablegen_registers",
-    ] + if_cxx_linked([
-        "@local_llvm//:cxx_headers",
-        "@local_llvm//:cxx_shared",
-        "@local_llvm//:cxx_abi_shared",
-    ]),
+    ],
     visibility = ["//visibility:private"],
 )
 
@@ -494,12 +459,8 @@ cc_binary(
         "@local_llvm//:config_headers",
         "@local_llvm//:headers",
         "@local_llvm//:support",
-    ] + if_cxx_linked([
-        "@local_llvm//:cxx_headers",
-        "@local_llvm//:cxx_shared",
-        "@local_llvm//:cxx_abi_shared",
-    ]),
-    linkopts = llvm_linkopts + select({
+    ],
+    linkopts = select({
         ":linux_x86_64": [
             "-Wl,-R -Wl,."
         ],
@@ -577,12 +538,8 @@ cc_binary(
         ":linux_x86_64": ["@local_llvm//:cl_libclang_cpp"],
         ":macos_x86_64": ["@local_llvm//:cl_libclang_cpp"],
         "//conditions:default": [],
-    }) + if_cxx_linked([
-        "@local_llvm//:cxx_headers",
-        "@local_llvm//:cxx_shared",
-        "@local_llvm//:cxx_abi_shared",
-    ]),
-    linkopts = llvm_linkopts + select({
+    }),
+    linkopts = select({
         ":linux_x86_64": [
             "-Wl,-R -Wl,."
         ],
@@ -706,12 +663,8 @@ cc_binary(
         "@local_llvm//:ml_vector_to_scf",
         "@local_llvm//:ml_vector_unroll_interface",
         "@local_llvm//:ml_view_like_interface",
-    ] + if_cxx_linked([
-        "@local_llvm//:cxx_headers",
-        "@local_llvm//:cxx_shared",
-        "@local_llvm//:cxx_abi_shared",
-    ]),
-    linkopts = llvm_linkopts + select({
+    ],
+    linkopts = select({
         ":linux_x86_64": [
             "-Wl,-R -Wl,."
         ],
