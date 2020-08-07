@@ -911,8 +911,8 @@ def _llvm_local_enabled(repository_ctx):
         ]))
     return enabled
 
-def _llvm_is_linked_against_cxx(repository_ctx, directory = "lib"):
-    """Returns whether the LLVM installation is linked against the libc++
+def _llvm_contains_cxx(repository_ctx, directory = "lib"):
+    """Returns whether the LLVM installation contains the libc++
        standard library.
 
     Args:
@@ -2794,7 +2794,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_ENABLE_EH}": str(enable_eh),
         "%{LLVM_TARGETS}": _llvm_get_formatted_target_list(repository_ctx,
             supported_targets),
-        "%{LLVM_CXX_LINKED}": str(_llvm_is_linked_against_cxx(repository_ctx)),
+        "%{LLVM_HAS_CXX}": str(_llvm_contains_cxx(repository_ctx)),
     })
 
     if _llvm_if_tablegen(repository_ctx, "llvm"):
