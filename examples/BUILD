@@ -734,12 +734,12 @@ genrule(
         "@local_llvm//:cl_copy_libclang_cpp",
     ],
     outs = [
-        "libclang.so.11git",
-        "libclang-cpp.so.11git",
+        "libclang.so.11",
+        "libclang-cpp.so.11",
     ],
     cmd = """
-        cp -f $(location @local_llvm//:cl_copy_libclang) $(@D)/libclang.so.11git
-        cp -f $(location @local_llvm//:cl_copy_libclang_cpp) $(@D)/libclang-cpp.so.11git
+        cp -f $(location @local_llvm//:cl_copy_libclang) $(@D)/libclang.so.11
+        cp -f $(location @local_llvm//:cl_copy_libclang_cpp) $(@D)/libclang-cpp.so.11
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
@@ -794,12 +794,12 @@ genrule(
         "@local_llvm//:ml_copy_c_runner_utils",
     ],
     outs = [
-        "libmlir_runner_utils.so.11git",
-        "libmlir_c_runner_utils.so.11git",
+        "libmlir_runner_utils.so.11",
+        "libmlir_c_runner_utils.so.11",
     ],
     cmd = """
-        cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)/libmlir_runner_utils.so.11git
-        cp -f $(location @local_llvm//:ml_copy_c_runner_utils) $(@D)/libmlir_c_runner_utils.so.11git
+        cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)/libmlir_runner_utils.so.11
+        cp -f $(location @local_llvm//:ml_copy_c_runner_utils) $(@D)/libmlir_c_runner_utils.so.11
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
