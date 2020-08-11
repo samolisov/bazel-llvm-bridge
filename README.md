@@ -329,13 +329,13 @@ developed and placed into the `examples` directory. The script accepts two
 parameters: `-I<path to libc++ headers such as iostream or string>` and
 `-L<path to libc++ shared library, libc++.so.1>`. For example:
 
-```bash
+```shell script
 $ python3 generate_libcxx_bazelrc.py -L/home/user/llvm/lib -I/home/user/llvm/include/c++/v1
 ```
 
 Once a `libcxx.bazelrc` file has been generated, a build can be started with `--config=libc++`
 option:
 
-```bash
+```shell script
 $ bazel build --repo_env LLVM_INSTALL_PREFIX=/home/user/llvm --config=libc++ //:clang_list_methods
 ```
