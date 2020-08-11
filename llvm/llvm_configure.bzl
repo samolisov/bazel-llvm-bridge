@@ -2314,7 +2314,7 @@ def _llvm_installed_impl(repository_ctx):
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_GPUTOGPURUNTIMETRANSFORMS_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_gpu_to_gpu_runtime_transforms",
-                "MLIRGPUtoGPURuntimeTransforms",
+                "MLIRGPUToGPURuntimeTransforms",
                 ["mlir_gpu", "mlir_ir", "mlir_llvm_ir", "mlir_pass",
                  "mlir_support", "llvm_core", "llvm_mc", "llvm_support"] +
                   (["llvm_amdgpu_code_gen", "llvm_amdgpu_desc",
@@ -2324,21 +2324,21 @@ def _llvm_installed_impl(repository_ctx):
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_GPUTONVVMTRANSFORMS_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_gpu_to_nvvm_transforms",
-                "MLIRGPUtoNVVMTransforms",
+                "MLIRGPUToNVVMTransforms",
                 ["mlir_gpu", "mlir_llvm_ir", "mlir_nvvm_ir", "mlir_pass",
                  "mlir_standard_to_llvm", "mlir_transform_utils",
                  "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_GPUTOROCDLTRANSFORMS_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_gpu_to_rocdl_transforms",
-                "MLIRGPUtoROCDLTransforms",
+                "MLIRGPUToROCDLTransforms",
                 ["mlir_gpu", "mlir_llvm_ir", "mlir_rocdl_ir", "mlir_pass",
                  "mlir_standard_to_llvm", "mlir_vector_to_rocdl",
                  "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_GPUTOSPIRVTRANSFORMS_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_gpu_to_spirv_transforms",
-                "MLIRGPUtoSPIRVTransforms",
+                "MLIRGPUToSPIRVTransforms",
                 ["mlir_gpu", "mlir_ir", "mlir_pass", "mlir_scf_to_spirv",
                  "mlir_spirv", "mlir_standard_ops",
                  "mlir_standard_to_spirv_transforms", "mlir_support",
@@ -2346,7 +2346,7 @@ def _llvm_installed_impl(repository_ctx):
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_GPUTOVULKANTRANSFORMS_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_gpu_to_vulkan_transforms",
-                "MLIRGPUtoVulkanTransforms",
+                "MLIRGPUToVulkanTransforms",
                 ["mlir_gpu", "mlir_ir", "mlir_llvm_ir", "mlir_pass",
                  "mlir_spirv", "mlir_spirv_serialization", "mlir_standard_ops",
                  "mlir_support", "mlir_transforms", "mlir_translation",
