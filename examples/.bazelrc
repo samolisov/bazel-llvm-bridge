@@ -4,6 +4,9 @@
 #
 # Linux options:
 #     opt:           Enables linux-compiler optimizations.
+#     libc++:        Enables the libc++ implementation of the standard C++
+#                    library. The compiler-rt and unwind libraries will be
+#                    enabled if libc++ is configured to use them.
 #
 # macOS options: (have not been tested yet)
 #     opt:           Enables mac-compiler optimizations.
@@ -32,6 +35,9 @@ build:opt-msvc --copt=/arch:AVX2
 # Enable clang-cl compiler
 build:clang-cl --extra_execution_platforms=//:x64_windows-clang-cl
 build:clang-cl --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl
+
+# Enable linking against the libc++ standard implementation
+try-import %workspace%/libcxx.bazelrc
 
 # Linux configs
 build:linux --copt=-Wall
