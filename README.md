@@ -316,55 +316,26 @@ in the `examples/BUILD` file) and be used for running your applications.
 
 ### Linking against the libc++ standard library
 
-Archives hosted on the http://releases.llvm.org/download.html official website,
-are usually built against the libc++ standard library. A Starlark macros is
-developed to deal with the libc++ standard library and can be loaded from
-the generated `llvm_config.bzl` file. The `if_cxx_linked` function is used to
-safely add the libc++ header library, `libcxx_static/libcxx_shared` and
-`libcxx_abi_static/libcxx_abi_shared` targets as dependencies. The first argument
-of the function will be taken into account when the local LLVM installation
-is linked against libc++, otherwise the second one (optional) will be used.
+Archives hosted on the http://releases.llvm.org/download.html official website
+are usually built against the libc++ standard library. A configuration has been
+added to the `examples/.bazelrc` file to make Bazel link the targets against
+libc++. To enable the configuration, an `examples/libcxx.bazelrc` file must
+be generated, the file contains a set of `BAZEL_...` repository environment
+variable to let Bazel know where to look for libc++'s headers and the shared
+library file.
 
-Notice: We assume the local installation of LLVM is linked against libc++ if
-the latter exists there.
+To generate the file, a python script, `generate_libcxx_bazelrc.py`, was
+developed and placed into the `examples` directory. The script accepts two
+parameters: `-I<path to libc++ headers such as iostream or string>` and
+`-L<path to libc++ shared library, libc++.so.1>`. For example:
 
-Since the libc++ header library is added to dependencies, there can be some
-collisions between the default C++ standard library (libstdc++, for example) and
-the provided libc++ headers. To eliminate the collisions, the "-nostdinc++"
-compiler option should be added to the 'copt' parameter of the targets (wrapped
-into the 'if_cxx_linked' condition).
+```bash
+$ python3 generate_libcxx_bazelrc.py -L/home/user/llvm/lib -I/home/user/llvm/include/c++/v1
+```
 
-There is an example how to use the `libcxx_*` targets and options:
+Once a `libcxx.bazelrc` file has been generated, a build can be started with `--config=libc++`
+option:
 
-```bzl
-llvm_copts = select({
-    ":linux_x86_64": llvm_nix_copts + if_cxx_linked(["-nostdinc++"]),
-    ":macos_x86_64": llvm_nix_copts + if_cxx_linked(["-nostdinc++"]),
-    ":windows_x86_64": llvm_win_copts,
-    "//conditions:default": [],
-})
-
-llvm_linkopts = select({
-    ":linux_x86_64": if_cxx_linked(["-stdlib=libc++"]),
-    ":macos_x86_64": if_cxx_linked(["-stdlib=libc++"]),
-    "//conditions:default": [],
-})
-
-cc_binary(
-    name = 'llvm_bb_counter',
-    srcs = [
-        "llvm/llvm_bb_counter.cc",
-    ],
-    copts = llvm_copts,
-    linkopts = llvm_linkopts,
-    deps = [
-        "@local_llvm//:llvm_headers",
-        "@local_llvm//:llvm_bit_reader",
-    ] + if_cxx_linked([
-        "@local_llvm//:libcxx_headers",
-        "@local_llvm//:libcxx_static",      # if you prefer shared libraries,
-        "@local_llvm//:libcxx_abi_static",  # use libcxx_shared and libcxx_abi_shared
-    ]),
-    visibility = ["//visibility:private"],
-)
+```bash
+$ bazel build --repo_env LLVM_INSTALL_PREFIX=/home/user/llvm --config=libc++ //:clang_list_methods
 ```
