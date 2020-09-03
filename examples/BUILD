@@ -517,6 +517,7 @@ cc_binary(
         "@local_llvm//:cl_handle_cxx",
         "@local_llvm//:cl_handle_llvm",
         "@local_llvm//:cl_index",
+        "@local_llvm//:cl_index_serialization",
         "@local_llvm//:cl_lex",
         "@local_llvm//:cl_libclang",
         "@local_llvm//:cl_parse",

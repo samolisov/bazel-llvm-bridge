@@ -1300,6 +1300,11 @@ def _llvm_installed_impl(repository_ctx):
                  "clang_lex", "clang_rewrite", "clang_serialization",
                  "clang_tooling_core", "llvm_core", "llvm_support"] +
                   (["clang_headers"] if add_hdrs else [])),
+        "%{CLANG_INDEXSERIALIZATION_LIB}":
+            _llvm_get_library_rule(ctx, prx, "clang_index_serialization",
+                "clangIndexSerialization",
+                ["clang_basic", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_LEX_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_lex",
                 "clangLex",
