@@ -1559,6 +1559,10 @@ def _llvm_installed_impl(repository_ctx):
                 "LLVMInstrumentation",
                 ["llvm_analysis", "llvm_core", "llvm_mc", "llvm_profile_data",
                  "llvm_support", "llvm_transform_utils"]),
+        "%{LLVM_INTERFACESTUB_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_interface_stub",
+                "LLVMInterfaceStub",
+                ["llvm_object", "llvm_support"]),
         "%{LLVM_INTERPRETER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_interpreter",
                 "LLVMInterpreter",
@@ -1666,9 +1670,9 @@ def _llvm_installed_impl(repository_ctx):
                 "LLVMPasses",
                 ["llvm_aggressive_inst_combine", "llvm_analysis",
                  "llvm_core", "llvm_coroutines", "llvm_inst_combine",
-                 "llvm_instrumentation", "llvm_scalar", "llvm_support",
-                 "llvm_target", "llvm_transform_utils", "llvm_vectorize",
-                 "llvm_ipo"]),
+                 "llvm_instrumentation", "llvm_objc_arc", "llvm_scalar",
+                 "llvm_support", "llvm_target", "llvm_transform_utils",
+                 "llvm_vectorize", "llvm_ipo"]),
         "%{LLVM_PROFILEDATA_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_profile_data",
                 "LLVMProfileData",

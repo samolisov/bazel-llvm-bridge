@@ -100,6 +100,7 @@ cc_binary(
         "@local_llvm//:global_i_sel",
         "@local_llvm//:inst_combine",
         "@local_llvm//:instrumentation",
+        "@local_llvm//:interface_stub",
         "@local_llvm//:interpreter",
         "@local_llvm//:ir_reader",
         "@local_llvm//:ipo",
