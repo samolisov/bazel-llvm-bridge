@@ -1535,6 +1535,9 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_EXTENSIONS}":
             _llvm_get_library_rule(ctx, prx, "llvm_extensions",
                 "LLVMExtensions"),
+        "%{LLVM_FILECHECK_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_file_check",
+                "LLVMFileCheck", ["llvm_support"]),
         "%{LLVM_FRONTEND_OPENACC_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_frontend_open_acc",
                 "LLVMFrontendOpenACC", ["llvm_support"]),

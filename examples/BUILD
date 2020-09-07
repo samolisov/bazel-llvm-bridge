@@ -94,6 +94,7 @@ cc_binary(
         "@local_llvm//:dwarf_linker",
         "@local_llvm//:execution_engine",
         "@local_llvm//:extensions",
+        "@local_llvm//:file_check",
         "@local_llvm//:frontend_open_acc",
         "@local_llvm//:frontend_open_mp",
         "@local_llvm//:fuzz_mutate",
