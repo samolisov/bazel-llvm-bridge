@@ -1534,7 +1534,7 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_support", "llvm_target"]),
         "%{LLVM_EXTENSIONS}":
             _llvm_get_library_rule(ctx, prx, "llvm_extensions",
-                "LLVMExtensions"),
+                "LLVMExtensions", ["llvm_support"]),
         "%{LLVM_FILECHECK_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_file_check",
                 "LLVMFileCheck", ["llvm_support"]),
@@ -2017,9 +2017,10 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "llvm_powerpc_code_gen",
                 "LLVMPowerPCCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
-                 "llvm_core", "llvm_mc", "llvm_powerpc_desc",
-                 "llvm_powerpc_info", "llvm_scalar", "llvm_selection_dag",
-                 "llvm_support", "llvm_target", "llvm_transform_utils"]),
+                 "llvm_core", "llvm_global_i_sel", "llvm_mc",
+                 "llvm_powerpc_desc", "llvm_powerpc_info", "llvm_scalar",
+                 "llvm_selection_dag", "llvm_support", "llvm_target",
+                 "llvm_transform_utils"]),
         "%{LLVM_POWERPC_DESC_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_powerpc_desc",
                 "LLVMPowerPCDesc",
