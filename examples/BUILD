@@ -644,7 +644,6 @@ cc_binary(
         "@local_llvm//:ml_sdbm",
         "@local_llvm//:ml_shape",
         "@local_llvm//:ml_shape_ops_transforms",
-        "@local_llvm//:ml_shape_to_scf",
         "@local_llvm//:ml_shape_to_standard",
         "@local_llvm//:ml_side_effect_interfaces",
         "@local_llvm//:ml_spirv",

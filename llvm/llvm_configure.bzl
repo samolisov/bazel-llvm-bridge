@@ -2516,15 +2516,14 @@ def _llvm_installed_impl(repository_ctx):
                  "mlir_linalg_to_llvm", "mlir_linalg_to_spirv_transforms",
                  "mlir_linalg_to_standard", "mlir_open_mp_to_llvm",
                  "mlir_scf_to_gpu", "mlir_scf_to_spirv",
-                 "mlir_scf_to_standard", "mlir_shape_to_scf",
-                 "mlir_shape_to_standard", "mlir_spirv_to_llvm",
-                 "mlir_standard_to_llvm", "mlir_standard_to_spirv_transforms",
-                 "mlir_vector_to_rocdl", "mlir_vector_to_llvm",
-                 "mlir_vector_to_scf", "mlir_loop_analysis", "mlir_analysis",
-                 "mlir_dialect", "mlir_edsc", "mlir_opt_lib", "mlir_parser",
-                 "mlir_pass", "mlir_transforms", "mlir_transform_utils",
-                 "mlir_support", "mlir_ir", "llvm_core", "llvm_asm_parser",
-                 "llvm_support"] +
+                 "mlir_scf_to_standard", "mlir_shape_to_standard",
+                 "mlir_spirv_to_llvm", "mlir_standard_to_llvm",
+                 "mlir_standard_to_spirv_transforms", "mlir_vector_to_rocdl",
+                 "mlir_vector_to_llvm", "mlir_vector_to_scf",
+                 "mlir_loop_analysis", "mlir_analysis", "mlir_dialect",
+                 "mlir_edsc", "mlir_opt_lib", "mlir_parser", "mlir_pass",
+                 "mlir_transforms", "mlir_transform_utils", "mlir_support",
+                 "mlir_ir", "llvm_core", "llvm_asm_parser", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_NVVMIR_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_nvvm_ir",
@@ -2659,13 +2658,6 @@ def _llvm_installed_impl(repository_ctx):
                 "MLIRShapeOpsTransforms",
                 ["mlir_ir", "mlir_pass", "mlir_shape", "mlir_support",
                  "mlir_transforms", "llvm_support"] +
-                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
-        "%{MLIR_SHAPETOSCF_LIB}":
-            _llvm_get_library_rule(ctx, prx, "mlir_shape_to_scf",
-                "MLIRShapeToSCF",
-                ["mlir_ir", "mlir_shape", "mlir_pass",
-                 "mlir_scf", "mlir_transforms", "llvm_core",
-                 "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_SHAPETOSTANDARD_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_shape_to_standard",
