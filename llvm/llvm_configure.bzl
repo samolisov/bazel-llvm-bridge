@@ -1684,7 +1684,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_PROFILEDATA_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_profile_data",
                 "LLVMProfileData",
-                ["llvm_core", "llvm_support"]),
+                ["llvm_core", "llvm_demangle", "llvm_support"]),
         "%{LLVM_REMARKS_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_remarks",
                 "LLVMRemarks",
