@@ -41,9 +41,9 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "bazel_llvm_bridge",
-    sha256 = "5db9aa9f0a61d2703558185c04c84f4b9e387d0f0404d4164561168054023592",
-    strip_prefix = "bazel-llvm-bridge-release-10-04",
-    url = "https://github.com/samolisov/bazel-llvm-bridge/archive/release/10-04.zip",
+    sha256 = "0e0971ec02d5e061c2c472d185e390597a4d7842e3e457cfcda2f04c1839c05e",
+    strip_prefix = "bazel-llvm-bridge-release-11-05",
+    url = "https://github.com/samolisov/bazel-llvm-bridge/archive/release/11-05.zip",
 )
 
 load("@bazel_llvm_bridge//llvm:llvm_configure.bzl", "llvm_configure")
