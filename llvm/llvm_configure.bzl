@@ -1529,7 +1529,7 @@ def _llvm_installed_impl(repository_ctx):
                  "llvm_support", "llvm_target"]),
         "%{LLVM_EXTENSIONS}":
             _llvm_get_library_rule(ctx, prx, "llvm_extensions",
-                "LLVMExtensions"),
+                "LLVMExtensions", ["llvm_support"]),
         "%{LLVM_FRONTEND_OPENACC_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_frontend_open_acc",
                 "LLVMFrontendOpenACC", ["llvm_support"]),
