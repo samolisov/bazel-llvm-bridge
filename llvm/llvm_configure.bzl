@@ -1397,8 +1397,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{CLANG_TOOLINGCORE_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_tooling_core",
                 "clangToolingCore",
-                ["clang_ast", "clang_basic", "clang_lex", "clang_rewrite",
-                 "llvm_support"] +
+                ["clang_basic", "clang_lex", "clang_rewrite", "llvm_support"] +
                   (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_TOOLINGINCLUSIONS_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_tooling_inclusions",
