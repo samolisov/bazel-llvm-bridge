@@ -2715,7 +2715,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{MLIR_STANDARDOPSTRANSFORMS_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_standard_ops_transforms",
                 "MLIRStandardOpsTransforms",
-                ["mlir_ir", "mlir_pass", "mlir_standard",
+                ["mlir_ir", "mlir_pass", "mlir_scf", "mlir_standard",
                  "mlir_transforms", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_STANDARDTOLLVM_LIB}":
