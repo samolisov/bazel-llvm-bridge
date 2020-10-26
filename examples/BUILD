@@ -587,6 +587,8 @@ cc_binary(
         "@local_llvm//:ml_affine_utils",
         "@local_llvm//:ml_analysis",
         "@local_llvm//:ml_async",
+        "@local_llvm//:ml_async_runtime",
+        "@local_llvm//:ml_async_to_llvm",
         "@local_llvm//:ml_avx512",
         "@local_llvm//:ml_avx512_to_llvm",
         "@local_llvm//:ml_c_runner_utils",
@@ -754,14 +756,17 @@ genrule(
 genrule(
     name = "copy_mlir_runner_shared_lin",
     srcs = [
+        "@local_llvm//:ml_copy_async_runtime",
         "@local_llvm//:ml_copy_runner_utils",
         "@local_llvm//:ml_copy_c_runner_utils",
     ],
     outs = [
+        "libmlir_async_runtime.so.12git",
         "libmlir_runner_utils.so.12git",
         "libmlir_c_runner_utils.so.12git",
     ],
     cmd = """
+        cp -f $(location @local_llvm//:ml_copy_async_runtime) $(@D)/libmlir_async_runtime.so.12git
         cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)/libmlir_runner_utils.so.12git
         cp -f $(location @local_llvm//:ml_copy_c_runner_utils) $(@D)/libmlir_c_runner_utils.so.12git
     """,
@@ -774,14 +779,17 @@ genrule(
 genrule(
     name = "copy_mlir_runner_shared_mac",
     srcs = [
+        "@local_llvm//:ml_copy_async_runtime",
         "@local_llvm//:ml_copy_runner_utils",
         "@local_llvm//:ml_copy_c_runner_utils",
     ],
     outs = [
+        "libmlir_async_runtime.dylib",
         "libmlir_runner_utils.dylib",
         "libmlir_c_runner_utils.dylib",
     ],
     cmd = """
+        cp -f $(location @local_llvm//:ml_copy_async_runtime) $(@D)
         cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)
         cp -f $(location @local_llvm//:ml_copy_c_runner_utils) $(@D)
     """,
@@ -794,14 +802,17 @@ genrule(
 genrule(
     name = "copy_mlir_runner_shared_win",
     srcs = [
+        "@local_llvm//:ml_copy_async_runtime",
         "@local_llvm//:ml_copy_runner_utils",
         "@local_llvm//:ml_copy_c_runner_utils",
     ],
     outs = [
+        "mlir_async_runtime.dll",
         "mlir_runner_utils.dll",
         "mlir_c_runner_utils.dll",
     ],
     cmd = """
+        cp -f $(location @local_llvm//:ml_copy_async_runtime) $(@D)
         cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)
         cp -f $(location @local_llvm//:ml_copy_c_runner_utils) $(@D)
     """,
