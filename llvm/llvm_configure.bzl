@@ -7,8 +7,6 @@
    https://github.com/tensorflow/ngraph-bridge/blob/master/bazel/tf_configure/tf_configure.bzl
 """
 
-_LLVM_LICENSE_FILE_PATH = "https://raw.githubusercontent.com/llvm/llvm-project/master/llvm/LICENSE.TXT"
-_LLVM_LICENSE_FILE_SHA256 = "8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee"
 _LLVM_INSTALL_PREFIX = "LLVM_INSTALL_PREFIX"
 
 def _tpl(repository_ctx, tpl, substitutions = {}, out = None):
@@ -839,21 +837,14 @@ def _llvm_get_formatted_target_list(repository_ctx, targets):
 
 def _llvm_local_enabled(repository_ctx):
     """Returns True if a path to a local LLVM installation is passed in
-       the '_LLVM_INSTALL_PREFIX' environment variable. Fails if the variable
-       is not defined and the 'urls' attribute is empty.
+       the '_LLVM_INSTALL_PREFIX' environment variable.
 
     Args:
         repository_ctx: the repository_ctx object.
     Returns:
         Whether the local LLVM installation must be used.
     """
-    enabled = _LLVM_INSTALL_PREFIX in repository_ctx.os.environ
-    if not enabled and len(repository_ctx.attr.urls) < 1:
-        _fail("\n".join([
-            "The 'urls' attribute is empty so that the path to a local LLVM installation",
-            "must be assigned to the '%s' environment variable." % _LLVM_INSTALL_PREFIX
-        ]))
-    return enabled
+    return _LLVM_INSTALL_PREFIX in repository_ctx.os.environ
 
 def _llvm_contains_cxx(repository_ctx, directory = "lib"):
     """Returns whether the LLVM installation contains the libc++
@@ -972,31 +963,11 @@ def _llvm_installed_impl(repository_ctx):
         repository_ctx.symlink("%s/lib" % llvm_path, "lib")
         _llvm_symlink_tablegens(repository_ctx, llvm_path)
     else:
-        # setup remote LLVM repository.
-        repository_ctx.download_and_extract(
-            repository_ctx.attr.urls,
-            sha256 = repository_ctx.attr.sha256,
-            stripPrefix = repository_ctx.attr.strip_prefix,
-        )
-
-        if repository_ctx.attr.build_file:
-            # Also setup BUILD file if it is specified. If the file is specified,
-            # we should not generate it, exit. Notice: the BUILD file must provide
-            # the same set of targets as this repository rule does.
-            repository_ctx.symlink(repository_ctx.attr.build_file, "BUILD")
-            # Also config file can be specified. If so, the file will be symlinked
-            # to llvm_config.bzl
-            if repository_ctx.attr.config_file:
-                repository_ctx.symlink(repository_ctx.attr.config_file, "llvm_config.bzl")
-            return
-
-        llvm_path = repository_ctx.path(".") # points to the root of the repository
-
-    # Anyway download the LICENSE file
-    repository_ctx.download(
-        url = _LLVM_LICENSE_FILE_PATH,
-        output = "./LICENSE.TXT",
-        sha256 = _LLVM_LICENSE_FILE_SHA256)
+        # Just fail
+        _fail("\n".join([
+            "The path to a local LLVM installation must be assigned",
+            "to the '%s' environment variable." % _LLVM_INSTALL_PREFIX
+        ]))
 
     # Symlink LLVM dependencies
     llvm_linkopts, llvm_deps = _llvm_symlink_dependencies(repository_ctx)
@@ -2065,11 +2036,6 @@ def _llvm_installed_impl(repository_ctx):
 llvm_configure = repository_rule(
     implementation = _llvm_installed_impl,
     attrs = {
-        "build_file": attr.label(),
-        "config_file": attr.label(), # Taken into account only if build_file is specified
-        "urls": attr.string_list(default = []),
-        "sha256": attr.string(default = ""),
-        "strip_prefix": attr.string(default = ""),
         "llvm_prefix": attr.string(default = "llvm_"),
         "clang_prefix": attr.string(default = "clang_"),
         "libcxx_prefix": attr.string(default = "libcxx_"),
