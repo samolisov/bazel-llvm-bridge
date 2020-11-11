@@ -1081,6 +1081,11 @@ def _llvm_installed_impl(repository_ctx):
                 ["clang_ast", "clang_ast_matchers", "clang_basic",
                  "clang_lex", "llvm_frontend_open_mp", "llvm_support"] +
                   (["clang_headers"] if add_hdrs else [])),
+        "%{CLANG_APINOTES_LIB}":
+            _llvm_get_library_rule(ctx, prx, "clang_api_notes",
+                "clangAPINotes",
+                ["clang_basic", "llvm_support"] +
+                  (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_ARCMIGRATE_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_arc_migrate",
                 "clangARCMigrate",

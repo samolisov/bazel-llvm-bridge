@@ -501,6 +501,7 @@ cc_binary(
         "@local_llvm//:config_headers",
         "@local_llvm//:cl_headers",
         "@local_llvm//:cl_analysis",
+        "@local_llvm//:cl_api_notes",
         "@local_llvm//:cl_arc_migrate",
         "@local_llvm//:cl_ast",
         "@local_llvm//:cl_ast_matchers",
