@@ -598,6 +598,7 @@ cc_binary(
         "@local_llvm//:ml_capi_ir",
         "@local_llvm//:ml_capi_registration",
         "@local_llvm//:ml_capi_standard",
+        "@local_llvm//:ml_capi_transforms",
         "@local_llvm//:ml_control_flow_interfaces",
         "@local_llvm//:ml_copy_op_interface",
         "@local_llvm//:ml_derived_attribute_op_interface",
@@ -636,9 +637,12 @@ cc_binary(
         "@local_llvm//:ml_pass",
         "@local_llvm//:ml_pdl",
         "@local_llvm//:ml_pdl_interp",
+        "@local_llvm//:ml_pdl_to_pdl_interp",
         "@local_llvm//:ml_presburger",
+        "@local_llvm//:ml_public_api",
         "@local_llvm//:ml_quant",
         "@local_llvm//:ml_reduce",
+        "@local_llvm//:ml_rewrite",
         "@local_llvm//:ml_rocdl_ir",
         "@local_llvm//:ml_runner_utils",
         "@local_llvm//:ml_scf",
@@ -652,6 +656,7 @@ cc_binary(
         "@local_llvm//:ml_shape_to_standard",
         "@local_llvm//:ml_side_effect_interfaces",
         "@local_llvm//:ml_spirv",
+        "@local_llvm//:ml_spirv_module_combiner",
         "@local_llvm//:ml_spirv_serialization",
         "@local_llvm//:ml_spirv_to_llvm",
         "@local_llvm//:ml_spirv_transforms",
@@ -667,6 +672,8 @@ cc_binary(
         "@local_llvm//:ml_target_llvm_ir_module_translation",
         "@local_llvm//:ml_target_nvvm_ir",
         "@local_llvm//:ml_target_rocdl_ir",
+        "@local_llvm//:ml_tosa",
+        "@local_llvm//:ml_tosa_transforms",
         "@local_llvm//:ml_transforms",
         "@local_llvm//:ml_transform_utils",
         "@local_llvm//:ml_translation",
@@ -760,16 +767,19 @@ genrule(
         "@local_llvm//:ml_copy_async_runtime",
         "@local_llvm//:ml_copy_runner_utils",
         "@local_llvm//:ml_copy_c_runner_utils",
+        "@local_llvm//:ml_copy_public_api",
     ],
     outs = [
         "libmlir_async_runtime.so.12git",
         "libmlir_runner_utils.so.12git",
         "libmlir_c_runner_utils.so.12git",
+        "libMLIRPublicAPI.so.12git",
     ],
     cmd = """
         cp -f $(location @local_llvm//:ml_copy_async_runtime) $(@D)/libmlir_async_runtime.so.12git
         cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)/libmlir_runner_utils.so.12git
         cp -f $(location @local_llvm//:ml_copy_c_runner_utils) $(@D)/libmlir_c_runner_utils.so.12git
+        cp -f $(location @local_llvm//:ml_copy_public_api) $(@D)/libMLIRPublicAPI.so.12git
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
@@ -783,16 +793,19 @@ genrule(
         "@local_llvm//:ml_copy_async_runtime",
         "@local_llvm//:ml_copy_runner_utils",
         "@local_llvm//:ml_copy_c_runner_utils",
+        "@local_llvm//:ml_copy_public_api",
     ],
     outs = [
         "libmlir_async_runtime.dylib",
         "libmlir_runner_utils.dylib",
         "libmlir_c_runner_utils.dylib",
+        "libMLIRPublicAPI.dylib",
     ],
     cmd = """
         cp -f $(location @local_llvm//:ml_copy_async_runtime) $(@D)
         cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)
         cp -f $(location @local_llvm//:ml_copy_c_runner_utils) $(@D)
+        cp -f $(location @local_llvm//:ml_copy_public_api) $(@D)
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
@@ -806,16 +819,19 @@ genrule(
         "@local_llvm//:ml_copy_async_runtime",
         "@local_llvm//:ml_copy_runner_utils",
         "@local_llvm//:ml_copy_c_runner_utils",
+        "@local_llvm//:ml_copy_public_api",
     ],
     outs = [
         "mlir_async_runtime.dll",
         "mlir_runner_utils.dll",
         "mlir_c_runner_utils.dll",
+        "MLIRPublicAPI.dll",
     ],
     cmd = """
         cp -f $(location @local_llvm//:ml_copy_async_runtime) $(@D)
         cp -f $(location @local_llvm//:ml_copy_runner_utils) $(@D)
         cp -f $(location @local_llvm//:ml_copy_c_runner_utils) $(@D)
+        cp -f $(location @local_llvm//:ml_copy_public_api) $(@D)
     """,
     output_to_bindir = 1,
     visibility = ["//visibility:private"],
