@@ -1545,7 +1545,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_INTERFACESTUB_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_interface_stub",
                 "LLVMInterfaceStub",
-                ["llvm_object", "llvm_support"]),
+                ["llvm_mc", "llvm_object", "llvm_support"]),
         "%{LLVM_INTERPRETER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_interpreter",
                 "LLVMInterpreter",
@@ -1569,7 +1569,8 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_JITLINK_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_jit_link",
                 "LLVMJITLink",
-                ["llvm_binary_format", "llvm_object", "llvm_support"]),
+                ["llvm_binary_format", "llvm_object", "llvm_orc_target_process",
+                 "llvm_support"]),
         "%{LLVM_LIBDRIVER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_lib_driver",
                 "LLVMLibDriver",
@@ -1637,17 +1638,21 @@ def _llvm_installed_impl(repository_ctx):
        "%{LLVM_OPTION_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_option",
                 "LLVMOption", ["llvm_support"]),
-       "%{LLVM_ORCERROR_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_orc_error",
-                "LLVMOrcError", ["llvm_support"]),
        "%{LLVM_ORCJIT_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_orc_jit",
                 "LLVMOrcJIT",
                 ["llvm_analysis", "llvm_bit_reader", "llvm_bit_writer",
                  "llvm_core", "llvm_execution_engine", "llvm_jit_link",
-                 "llvm_mc", "llvm_object", "llvm_orc_error",
-                 "llvm_passes", "llvm_runtime_dyld", "llvm_support",
-                 "llvm_target", "llvm_transform_utils"]),
+                 "llvm_mc", "llvm_object", "llvm_orc_shared",
+                 "llvm_orc_target_process", "llvm_passes", "llvm_runtime_dyld",
+                 "llvm_support", "llvm_target", "llvm_transform_utils"]),
+       "%{LLVM_ORCSHARED_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_orc_shared",
+                "LLVMOrcShared", ["llvm_support"]),
+       "%{LLVM_ORCTARGETPROCESS_LIB}":
+            _llvm_get_library_rule(ctx, prx, "llvm_orc_target_process",
+                "LLVMOrcTargetProcess",
+                ["llvm_orc_shared", "llvm_support"]),
         "%{LLVM_PASSES_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_passes",
                 "LLVMPasses",
