@@ -1582,7 +1582,8 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_LINKER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_linker",
                 "LLVMLinker",
-                ["llvm_core", "llvm_support", "llvm_transform_utils"]),
+                ["llvm_core", "llvm_object", "llvm_support",
+                 "llvm_transform_utils"]),
         "%{LLVM_LTO_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_lto",
                 "LLVMLTO",
@@ -1996,8 +1997,8 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_POWERPC_CODEGEN_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_powerpc_code_gen",
                 "LLVMPowerPCCodeGen",
-                ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
-                 "llvm_core", "llvm_global_i_sel", "llvm_mc",
+                ["llvm_analysis", "llvm_asm_printer", "llvm_binary_format",
+                 "llvm_code_gen", "llvm_core", "llvm_global_i_sel", "llvm_mc",
                  "llvm_powerpc_desc", "llvm_powerpc_info", "llvm_scalar",
                  "llvm_selection_dag", "llvm_support", "llvm_target",
                  "llvm_transform_utils"]),
