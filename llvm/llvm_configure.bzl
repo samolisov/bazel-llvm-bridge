@@ -2227,6 +2227,18 @@ def _llvm_installed_impl(repository_ctx):
                  "mlir_control_flow_interfaces", "mlir_infer_type_op_interface",
                  "mlir_scf", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
+        "%{MLIR_ARMNEON_LIB}":
+            _llvm_get_library_rule(ctx, prx, "mlir_arm_neon",
+                "MLIRArmNeon",
+                ["mlir_ir", "mlir_side_effect_interfaces", "llvm_support"] +
+                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
+        "%{MLIR_ARMNEONTOLLVM_LIB}":
+            _llvm_get_library_rule(ctx, prx, "mlir_arm_neon_to_llvm",
+                "MLIRArmNeonToLLVM",
+                ["mlir_arm_neon", "mlir_llvm_arm_neon", "mlir_llvm_ir",
+                 "mlir_standard_to_llvm", "mlir_transforms", "llvm_core",
+                 "llvm_support"] +
+                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_ASYNC_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_async",
                 "MLIRAsync",
@@ -2256,8 +2268,7 @@ def _llvm_installed_impl(repository_ctx):
         "%{MLIR_AVX512_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_avx512",
                 "MLIRAVX512",
-                ["mlir_ir", "mlir_side_effect_interfaces",
-                 "mlir_vector_to_llvm", "llvm_support"] +
+                ["mlir_ir", "mlir_side_effect_interfaces", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_AVX512TOLLVM_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_avx512_to_llvm",
@@ -2292,19 +2303,21 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "mlir_capi_registration",
                 "MLIRCAPIRegistration",
                 ["mlir_capi_ir", "mlir_affine", "mlir_affine_edsc",
-                 "mlir_affine_transforms", "mlir_affine_utils", "mlir_async",
-                 "mlir_async_transforms", "mlir_avx512", "mlir_gpu",
-                 "mlir_linalg_analysis", "mlir_linalg_edsc", "mlir_linalg",
-                 "mlir_linalg_transforms", "mlir_linalg_utils",
-                 "mlir_llvm_ir_transforms", "mlir_llvm_ir", "mlir_llvm_avx512",
+                 "mlir_affine_transforms", "mlir_affine_utils",
+                 "mlir_arm_neon", "mlir_async", "mlir_async_transforms",
+                 "mlir_avx512", "mlir_gpu", "mlir_linalg_analysis",
+                 "mlir_linalg_edsc", "mlir_linalg", "mlir_linalg_transforms",
+                 "mlir_linalg_utils", "mlir_llvm_ir_transforms",
+                 "mlir_llvm_ir", "mlir_llvm_arm_neon", "mlir_llvm_avx512",
                  "mlir_nvvm_ir", "mlir_rocdl_ir", "mlir_open_acc",
                  "mlir_open_mp", "mlir_pdl", "mlir_pdl_interp", "mlir_quant",
                  "mlir_scf", "mlir_scf_transforms", "mlir_sdbm", "mlir_shape",
                  "mlir_shape_ops_transforms", "mlir_spirv",
                  "mlir_spirv_module_combiner", "mlir_spirv_serialization",
                  "mlir_spirv_transforms", "mlir_standard",
-                 "mlir_standard_ops_transforms", "mlir_tosa",
-                 "mlir_tosa_transforms", "mlir_vector", "llvm_support"] +
+                 "mlir_standard_ops_transforms", "mlir_tensor",
+                 "mlir_tensor_transforms", "mlir_tosa", "mlir_tosa_transforms",
+                 "mlir_vector", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_CAPISTANDARD_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_capi_standard",
@@ -2356,8 +2369,8 @@ def _llvm_installed_impl(repository_ctx):
         "%{MLIR_GPU_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_gpu",
                 "MLIRGPU",
-                ["mlir_edsc", "mlir_ir", "mlir_llvm_ir", "mlir_scf",
-                 "mlir_pass", "mlir_side_effect_interfaces",
+                ["mlir_async", "mlir_edsc", "mlir_ir", "mlir_llvm_ir",
+                 "mlir_scf", "mlir_pass", "mlir_side_effect_interfaces",
                  "mlir_standard", "mlir_support",
                  "mlir_transform_utils", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
@@ -2416,10 +2429,10 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "mlir_jit_runner",
                 "MLIRJitRunner",
                 ["mlir_avx512", "mlir_affine", "mlir_affine_edsc",
-                 "mlir_affine_transforms", "mlir_affine_utils", "mlir_async",
-                 "mlir_async_transforms", "mlir_execution_engine", "mlir_gpu",
-                 "mlir_ir", "mlir_llvm_avx512", "mlir_llvm_ir",
-                 "mlir_llvm_ir_transforms", "mlir_linalg",
+                 "mlir_affine_transforms", "mlir_affine_utils", "mlir_arm_neon",
+                 "mlir_async", "mlir_async_transforms", "mlir_execution_engine",
+                 "mlir_gpu", "mlir_ir", "mlir_llvm_arm_neon", "mlir_llvm_avx512",
+                 "mlir_llvm_ir", "mlir_llvm_ir_transforms", "mlir_linalg",
                  "mlir_linalg_analysis", "mlir_linalg_edsc",
                  "mlir_linalg_transforms", "mlir_linalg_utils", "mlir_nvvm_ir",
                  "mlir_open_acc", "mlir_open_mp", "mlir_pdl", "mlir_pdl_interp",
@@ -2429,9 +2442,10 @@ def _llvm_installed_impl(repository_ctx):
                  "mlir_spirv_transforms", "mlir_shape",
                  "mlir_shape_ops_transforms", "mlir_standard",
                  "mlir_standard_ops_transforms", "mlir_standard_to_llvm",
-                 "mlir_support", "mlir_target_llvm_ir", "mlir_tosa",
-                 "mlir_tosa_transforms", "mlir_transforms", "mlir_vector",
-                 "llvm_core", "llvm_jit_link", "llvm_orc_jit", "llvm_support"] +
+                 "mlir_support", "mlir_target_llvm_ir", "mlir_tensor",
+                 "mlir_tensor_transforms", "mlir_tosa", "mlir_tosa_transforms",
+                 "mlir_transforms", "mlir_vector", "llvm_core",
+                 "llvm_jit_link", "llvm_orc_jit", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_LINALG_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_linalg",
@@ -2491,6 +2505,12 @@ def _llvm_installed_impl(repository_ctx):
                  "mlir_linalg", "mlir_scf", "mlir_pass", "mlir_standard",
                  "mlir_transform_utils", "llvm_support"] +
                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
+        "%{MLIR_LLVMARMNEON_LIB}":
+            _llvm_get_library_rule(ctx, prx, "mlir_llvm_arm_neon",
+                "MLIRLLVMArmNeon",
+                ["mlir_ir", "mlir_llvm_ir", "mlir_side_effect_interfaces",
+                 "llvm_asm_parser", "llvm_core", "llvm_support"] +
+                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_LLVMAVX512_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_llvm_avx512",
                 "MLIRLLVMAVX512",
@@ -2528,10 +2548,11 @@ def _llvm_installed_impl(repository_ctx):
                 ["mlir_affine", "mlir_affine_edsc",
                  "mlir_affine_transforms", "mlir_affine_utils",
                  "mlir_async", "mlir_async_to_llvm", "mlir_async_transforms",
-                 "mlir_avx512", "mlir_gpu", "mlir_linalg_analysis",
-                 "mlir_linalg_edsc", "mlir_linalg", "mlir_linalg_transforms",
-                 "mlir_linalg_utils", "mlir_llvm_ir_transforms", "mlir_llvm_ir",
-                 "mlir_llvm_avx512", "mlir_nvvm_ir", "mlir_rocdl_ir",
+                 "mlir_arm_neon", "mlir_arm_neon_to_llvm", "mlir_avx512",
+                 "mlir_gpu", "mlir_linalg_analysis", "mlir_linalg_edsc",
+                 "mlir_linalg", "mlir_linalg_transforms", "mlir_linalg_utils",
+                 "mlir_llvm_ir_transforms", "mlir_llvm_ir", "mlir_llvm_avx512",
+                 "mlir_llvm_arm_neon", "mlir_nvvm_ir", "mlir_rocdl_ir",
                  "mlir_open_acc", "mlir_open_mp", "mlir_pdl",
                  "mlir_pdl_interp", "mlir_pdl_to_pdl_interp", "mlir_quant",
                  "mlir_scf", "mlir_scf_transforms", "mlir_sdbm", "mlir_shape",
@@ -2555,8 +2576,9 @@ def _llvm_installed_impl(repository_ctx):
                  "mlir_vector_to_spirv", "mlir_loop_analysis", "mlir_analysis",
                  "mlir_dialect", "mlir_edsc", "mlir_opt_lib", "mlir_parser",
                  "mlir_pass", "mlir_transforms", "mlir_transform_utils",
-                 "mlir_support", "mlir_tosa", "mlir_tosa_transforms",
-                 "mlir_ir", "llvm_core", "llvm_asm_parser", "llvm_support"] +
+                 "mlir_support", "mlir_tensor", "mlir_tensor_transforms",
+                 "mlir_tosa", "mlir_tosa_transforms", "mlir_ir", "llvm_core",
+                 "llvm_asm_parser", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_NVVMIR_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_nvvm_ir",
@@ -2640,7 +2662,9 @@ def _llvm_installed_impl(repository_ctx):
         "%{MLIR_REWRITE_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_rewrite",
                 "MLIRRewrite",
-                ["mlir_ir", "llvm_support"] +
+                ["mlir_ir", "mlir_pdl", "mlir_pdl_interp",
+                 "mlir_pdl_to_pdl_interp", "mlir_side_effect_interfaces",
+                 "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_ROCDLIR_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_rocdl_ir",
@@ -2763,8 +2787,8 @@ def _llvm_installed_impl(repository_ctx):
                 "MLIRStandard",
                 ["mlir_call_interfaces", "mlir_control_flow_interfaces",
                  "mlir_edsc", "mlir_ir", "mlir_side_effect_interfaces",
-                 "mlir_vector_interfaces", "mlir_view_like_interface",
-                 "llvm_support"] +
+                 "mlir_tensor", "mlir_vector_interfaces",
+                 "mlir_view_like_interface", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_STANDARDOPSTRANSFORMS_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_standard_ops_transforms",
@@ -2801,6 +2825,13 @@ def _llvm_installed_impl(repository_ctx):
         "%{MLIR_TABLEGEN_TOOL}":
             _llvm_get_executable_file_rule(ctx, prx, "mlir_tablegen_tool",
                 "mlir-tblgen"),
+        "%{MLIR_TARGETARMNEON_LIB}":
+            _llvm_get_library_rule(ctx, prx, "mlir_target_arm_neon",
+                "MLIRTargetArmNeon",
+                ["mlir_ir", "mlir_llvm_arm_neon", "mlir_llvm_ir",
+                 "mlir_target_llvm_ir_module_translation",
+                 "llvm_core", "llvm_support"] +
+                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_TARGETAVX512_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_target_avx512",
                 "MLIRTargetAVX512",
@@ -2835,6 +2866,17 @@ def _llvm_installed_impl(repository_ctx):
                 ["mlir_gpu", "mlir_ir", "mlir_llvm_ir", "mlir_rocdl_ir",
                  "mlir_target_llvm_ir_module_translation",
                  "llvm_core", "llvm_support"] +
+                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
+        "%{MLIR_TENSOR_LIB}":
+            _llvm_get_library_rule(ctx, prx, "mlir_tensor",
+                "MLIRTensor",
+                ["mlir_ir", "mlir_support", "llvm_core", "llvm_support"] +
+                  (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
+        "%{MLIR_TENSORTRANSFORMS_LIB}":
+            _llvm_get_library_rule(ctx, prx, "mlir_tensor_transforms",
+                "MLIRTensorTransforms",
+                ["mlir_ir", "mlir_pass", "mlir_tensor", "mlir_transforms",
+                 "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
         "%{MLIR_TOSA_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_tosa",
@@ -2880,7 +2922,9 @@ def _llvm_installed_impl(repository_ctx):
         "%{MLIR_VECTORTOLLVM_LIB}":
             _llvm_get_library_rule(ctx, prx, "mlir_vector_to_llvm",
                 "MLIRVectorToLLVM",
-                ["mlir_llvm_ir", "mlir_standard_to_llvm",
+                ["mlir_avx512", "mlir_avx512_to_llvm", "mlir_arm_neon",
+                 "mlir_arm_neon_to_llvm", "mlir_llvm_arm_neon",
+                 "mlir_llvm_avx512", "mlir_llvm_ir", "mlir_standard_to_llvm",
                  "mlir_target_llvm_ir_module_translation", "mlir_transforms",
                  "mlir_vector", "llvm_core", "llvm_support"] +
                   (["mlir_headers", "llvm_headers"] if add_hdrs else [])),
