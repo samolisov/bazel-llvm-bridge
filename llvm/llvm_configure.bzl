@@ -1325,7 +1325,7 @@ def _llvm_installed_impl(repository_ctx):
                 "clangSema",
                 ["clang_ast", "clang_analysis", "clang_basic",
                  "clang_edit", "clang_lex", "llvm_frontend_open_mp",
-                 "llvm_support"] +
+                 "llvm_core", "llvm_support"] +
                   (["clang_headers"] if add_hdrs else [])),
         "%{CLANG_SERIALIZATION_LIB}":
             _llvm_get_library_rule(ctx, prx, "clang_serialization",
