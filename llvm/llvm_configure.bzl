@@ -1500,8 +1500,9 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_DWARFLINKER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_dwarf_linker",
                 "LLVMDWARFLinker",
-                ["llvm_asm_printer", "llvm_code_gen", "llvm_debug_info_dwarf",
-                 "llvm_mc", "llvm_object", "llvm_support"]),
+                ["llvm_asm_printer", "llvm_binary_format", "llvm_code_gen",
+                 "llvm_debug_info_dwarf", "llvm_mc", "llvm_object",
+                 "llvm_support"]),
         "%{LLVM_EXECUTION_ENGINE_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_execution_engine",
                 "LLVMExecutionEngine",
@@ -1770,9 +1771,9 @@ def _llvm_installed_impl(repository_ctx):
                 ["llvm_amdgpu_desc", "llvm_amdgpu_info", "llvm_amdgpu_utils",
                  "llvm_analysis", "llvm_asm_printer", "llvm_binary_format",
                  "llvm_code_gen", "llvm_core", "llvm_global_i_sel", "llvm_mc",
-                 "llvm_mir_parser", "llvm_scalar", "llvm_selection_dag",
-                 "llvm_support", "llvm_target", "llvm_transform_utils",
-                 "llvm_vectorize", "llvm_ipo"]),
+                 "llvm_mir_parser", "llvm_passes", "llvm_scalar",
+                 "llvm_selection_dag", "llvm_support", "llvm_target",
+                 "llvm_transform_utils", "llvm_vectorize", "llvm_ipo"]),
         "%{LLVM_AMDGPU_DESC_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_amdgpu_desc",
                 "LLVMAMDGPUDesc",
