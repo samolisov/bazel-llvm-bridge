@@ -1232,7 +1232,7 @@ def _llvm_installed_impl(repository_ctx):
                      ] if "PowerPC" in supported_targets else [])
                   + (["llvm_riscv_code_gen", "llvm_riscv_asm_parser",
                       "llvm_riscv_desc", "llvm_riscv_disassembler",
-                      "llvm_riscv_info", "llvm_riscv_utils"
+                      "llvm_riscv_info"
                      ] if "RISCV" in supported_targets else [])
                   + (["llvm_sparc_code_gen", "llvm_sparc_asm_parser",
                       "llvm_sparc_desc", "llvm_sparc_disassembler",
