@@ -211,7 +211,6 @@ cc_binary(
         "@local_llvm//:riscv_desc",
         "@local_llvm//:riscv_disassembler",
         "@local_llvm//:riscv_info",
-        "@local_llvm//:riscv_utils",
     ]) + if_has_sparc([
         "@local_llvm//:sparc_asm_parser",
         "@local_llvm//:sparc_code_gen",

@@ -2020,19 +2020,18 @@ def _llvm_installed_impl(repository_ctx):
             _llvm_get_library_rule(ctx, prx, "llvm_riscv_asm_parser",
                 "LLVMRISCVAsmParser",
                 ["llvm_mc", "llvm_mc_parser", "llvm_riscv_desc",
-                 "llvm_riscv_info", "llvm_riscv_utils", "llvm_support"]),
+                 "llvm_riscv_info", "llvm_support"]),
         "%{LLVM_RISCV_CODEGEN_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_riscv_code_gen",
                 "LLVMRISCVCodeGen",
                 ["llvm_analysis", "llvm_asm_printer", "llvm_code_gen",
                  "llvm_core", "llvm_global_i_sel", "llvm_mc",
-                 "llvm_riscv_desc", "llvm_riscv_info", "llvm_riscv_utils",
-                 "llvm_selection_dag", "llvm_support", "llvm_target"]),
+                 "llvm_riscv_desc", "llvm_riscv_info", "llvm_selection_dag",
+                 "llvm_support", "llvm_target"]),
         "%{LLVM_RISCV_DESC_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_riscv_desc",
                 "LLVMRISCVDesc",
-                ["llvm_mc", "llvm_riscv_info", "llvm_riscv_utils",
-                 "llvm_support"]),
+                ["llvm_mc", "llvm_riscv_info", "llvm_support"]),
         "%{LLVM_RISCV_DISASSEMBLER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_riscv_disassembler",
                 "LLVMRISCVDisassembler",
@@ -2040,10 +2039,6 @@ def _llvm_installed_impl(repository_ctx):
         "%{LLVM_RISCV_INFO_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_riscv_info",
                 "LLVMRISCVInfo",
-                ["llvm_support"]),
-        "%{LLVM_RISCV_UTILS_LIB}":
-            _llvm_get_library_rule(ctx, prx, "llvm_riscv_utils",
-                "LLVMRISCVUtils",
                 ["llvm_support"]),
         "%{LLVM_SPARC_ASMPARSER_LIB}":
             _llvm_get_library_rule(ctx, prx, "llvm_sparc_asm_parser",
