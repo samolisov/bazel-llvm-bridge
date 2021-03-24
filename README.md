@@ -1,3 +1,7 @@
+**Due to the LLVM community's planes to add the Bazel build files in the project's monorepo
+[[1]](https://lists.llvm.org/pipermail/llvm-dev/2021-March/149220.html), I see no intent for
+the project.**
+
 # Bazel to the LLVM Compiler Infrastructure bridge
 
 [Bazel](https://docs.bazel.build/versions/master/bazel-overview.html) is an open-source
